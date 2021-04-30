@@ -34,6 +34,14 @@ public class Setting<T> {
         return this;
     }
 
+    public Setting<T> r(Setting<Boolean> booleanSetting) {
+        return v(() -> !booleanSetting.getValue());
+    }
+
+    public Setting<T> b(Setting<Boolean> booleanSetting) {
+        return v(booleanSetting::getValue);
+    }
+
     public boolean isVisible() {
         for (BooleanSupplier booleanSupplier : visibilities) {
             if (!booleanSupplier.getAsBoolean()) return false;

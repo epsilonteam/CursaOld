@@ -4,7 +4,9 @@
   "package": "club.eridani.cursa.mixin.mixins",
   "refmap": "mixins.cursa.refmap.json",
   "mixins": [
-    "MixinMinecraft",
-    "MixinNetWork"
+    "client.MixinMinecraft",
+    "entity.MixinEntityPlayerSP",
+    "network.MixinNetWork",
+    "render.MixinEntityRenderer"
   ]
 }

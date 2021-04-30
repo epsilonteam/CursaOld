@@ -1,5 +1,5 @@
 # Cursa
-Lite wight utility mod base for anarchy server
+A Mixin Injection lite weight utility mod base for 1.12.2
 
 ## License
 MIT

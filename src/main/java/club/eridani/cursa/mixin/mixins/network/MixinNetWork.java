@@ -1,4 +1,4 @@
-package club.eridani.cursa.mixin.mixins;
+package club.eridani.cursa.mixin.mixins.network;
 
 import club.eridani.cursa.Cursa;
 import club.eridani.cursa.event.events.network.PacketEvent;
