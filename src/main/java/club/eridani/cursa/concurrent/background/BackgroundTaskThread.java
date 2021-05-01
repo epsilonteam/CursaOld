@@ -14,10 +14,10 @@ public class BackgroundTaskThread extends Thread {
     @Override
     public void run() {
         while (!shouldStop) {
-            Task task = TaskManager.getInstance().getBackgroundTask();
+            Task<Object> task = TaskManager.getInstance().getBackgroundTask();
             //Make sure no dead lock here
             if (task != null) {
-                task.invoke();
+                task.invoke(null);
             } else {
                 isSuspended = true;
                 this.suspend();

@@ -1,7 +1,7 @@
 package club.eridani.cursa.client;
 
 import club.eridani.cursa.Cursa;
-import club.eridani.cursa.concurrent.Syncer;
+import club.eridani.cursa.concurrent.utils.Syncer;
 import club.eridani.cursa.event.events.client.InputUpdateEvent;
 import club.eridani.cursa.event.events.client.SettingUpdateEvent;
 import club.eridani.cursa.event.events.client.TickEvent;
@@ -16,6 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static club.eridani.cursa.concurrent.TaskManager.launch;
 import static club.eridani.cursa.concurrent.TaskManager.runBlocking;
+
 
 public class ModuleBus {
 
@@ -50,23 +51,31 @@ public class ModuleBus {
 
     @Listener
     public void onTick(TickEvent event) {
-        modules.forEach(ModuleBase::onTick);
-
-        runBlocking(() -> {
+        runBlocking(blocking -> {
             Syncer syncer = new Syncer(modules.size());
-            modules.forEach(it -> launch(syncer, it::onParallelTick));
+            modules.forEach(it -> launch(syncer, launching -> it.onParallelTick()));
             syncer.await();
         });
-
+        modules.forEach(ModuleBase::onTick);
     }
 
     @Listener
     public void onRenderTick(RenderOverlayEvent event) {
+        runBlocking(blocking -> {
+            Syncer syncer = new Syncer(modules.size());
+            modules.forEach(it -> launch(syncer, launching -> it.onParallelRenderTick()));
+            syncer.await();
+        });
         modules.forEach(ModuleBase::onRenderTick);
     }
 
     @Listener
     public void onRender(RenderOverlayEvent event) {
+        runBlocking(blocking -> {
+            Syncer syncer = new Syncer(modules.size());
+            modules.forEach(it -> launch(syncer, launching -> it.onParallelTick()));
+            syncer.await();
+        });
         modules.forEach(it -> it.onRender(event));
     }
 
@@ -77,16 +86,31 @@ public class ModuleBus {
 
     @Listener
     public void onPacketSend(PacketEvent.Send event) {
+        runBlocking(blocking -> {
+            Syncer syncer = new Syncer(modules.size());
+            modules.forEach(it -> launch(syncer, it::onParallelPacketSend,event));
+            syncer.await();
+        });
         modules.forEach(it -> it.onPacketSend(event));
     }
 
     @Listener
     public void onPacketReceive(PacketEvent.Receive event) {
+        runBlocking(blocking -> {
+            Syncer syncer = new Syncer(modules.size());
+            modules.forEach(it -> launch(syncer, it::onParallelPacketReceive,event));
+            syncer.await();
+        });
         modules.forEach(it -> it.onPacketReceive(event));
     }
 
     @Listener
     public void onSettingChange(SettingUpdateEvent event) {
+        runBlocking(blocking -> {
+            Syncer syncer = new Syncer(modules.size());
+            modules.forEach(it -> launch(syncer, it::onParallelSettingChange,event.getSetting()));
+            syncer.await();
+        });
         modules.forEach(it -> it.onSettingChange(event.getSetting()));
     }
 

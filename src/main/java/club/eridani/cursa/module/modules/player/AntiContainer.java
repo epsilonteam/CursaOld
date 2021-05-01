@@ -28,8 +28,8 @@ public class AntiContainer extends ModuleBase {
     Setting<Boolean> Brewing_Stand = setting("Brewing_Stand", true);
     Setting<Boolean> ShulkerBox = setting("ShulkerBox", true);
 
-    @Listener
-    public void onCheck(PacketEvent.Send packet) {
+    @Override
+    public void onParallelPacketSend(PacketEvent.Send packet) {
         if (packet.packet instanceof CPacketPlayerTryUseItemOnBlock) {
             BlockPos pos = ((CPacketPlayerTryUseItemOnBlock) packet.packet).getPos();
             if (check(pos)) packet.cancel();

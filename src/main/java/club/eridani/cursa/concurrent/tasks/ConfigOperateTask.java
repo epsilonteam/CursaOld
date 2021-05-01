@@ -1,12 +1,11 @@
 package club.eridani.cursa.concurrent.tasks;
 
 import club.eridani.cursa.client.ConfigManager;
-import club.eridani.cursa.concurrent.Task;
 
 /**
  * Created by B_312 on 05/01/2021
  */
-public class ConfigOperateTask implements Task {
+public class ConfigOperateTask implements ObjectTask {
 
     public Operation operation;
 
@@ -15,7 +14,7 @@ public class ConfigOperateTask implements Task {
     }
 
     @Override
-    public void invoke() {
+    public void invoke(Object valueIn) {
         switch (operation) {
             case Save: {
                 ConfigManager.saveAll();

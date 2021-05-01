@@ -9,5 +9,8 @@
     "network.MixinNetWork",
     "render.MixinEntityRenderer",
     "render.MixinGuiIngame"
+  ],
+  "client": [
+    "render.MixinModelBiped"
   ]
 }

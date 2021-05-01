@@ -3,6 +3,7 @@ package club.eridani.cursa.client;
 import club.eridani.cursa.Cursa;
 import club.eridani.cursa.gui.Panel;
 import club.eridani.cursa.module.ModuleBase;
+import club.eridani.cursa.module.modules.player.FakePlayer;
 import club.eridani.cursa.setting.Setting;
 import club.eridani.cursa.setting.settings.*;
 import com.google.gson.*;
@@ -247,6 +248,7 @@ public class ConfigManager {
         JsonObject stuff = new JsonObject();
         stuff.addProperty("CommandPrefix", CommandManager.cmdPrefix);
         stuff.addProperty("ChatSuffix", Cursa.CHAT_SUFFIX);
+        stuff.addProperty("FakePlayerName", FakePlayer.customName);
         father.add("Client", stuff);
     }
 
@@ -264,6 +266,7 @@ public class ConfigManager {
         try {
             CommandManager.cmdPrefix = json.get("CommandPrefix").getAsString();
             Cursa.CHAT_SUFFIX = json.get("ChatSuffix").getAsString();
+            FakePlayer.customName = json.get("FakePlayerName").getAsString();
         } catch (Exception e) {
             Cursa.log.error("Error while setting client!");
         }

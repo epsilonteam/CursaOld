@@ -1,4 +1,4 @@
-package club.eridani.cursa.concurrent;
+package club.eridani.cursa.concurrent.utils;
 
 import java.util.concurrent.CountDownLatch;
 

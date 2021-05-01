@@ -1,10 +1,9 @@
 package club.eridani.cursa.module.modules.movement;
 
 import club.eridani.cursa.event.events.network.PacketEvent;
-import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.module.Category;
-import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.module.Module;
+import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
@@ -23,8 +22,8 @@ public class Velocity extends ModuleBase {
 
     public final Minecraft mc = Minecraft.getMinecraft();
 
-    @Listener
-    public void receivePacket(PacketEvent.Receive event) {
+    @Override
+    public void onParallelPacketReceive(PacketEvent.Receive event) {
         if(mc.player == null) return;
         if (event.packet instanceof SPacketEntityStatus && this.bobbers.getValue()) {
             final SPacketEntityStatus packet = (SPacketEntityStatus) event.packet;

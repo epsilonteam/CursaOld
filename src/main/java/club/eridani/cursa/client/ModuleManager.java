@@ -64,9 +64,7 @@ public class ModuleManager {
             }
         });
         tempList.sort(Comparator.comparing(it -> it.name));
-        tempList.forEach(it -> {
-            moduleMap.put(it.getClass(), it);
-        });
+        tempList.forEach(it -> moduleMap.put(it.getClass(), it));
     }
 
 }

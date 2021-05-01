@@ -97,6 +97,18 @@ public class ModuleBase {
     public void onParallelTick(){
     }
 
+    public void onParallelPacketSend(PacketEvent.Send event){
+    }
+
+    public void onParallelPacketReceive(PacketEvent.Receive event){
+    }
+
+    public void onParallelSettingChange(Setting<?> event){
+    }
+
+    public void onParallelRenderTick(){
+    }
+
     public Setting<Boolean> setting(String name, boolean defaultValue) {
         BooleanSetting value = new BooleanSetting(name, defaultValue);
         settings.add(value);
