@@ -20,7 +20,7 @@ public class FontManager {
     }
 
     public static int getHeight(){
-        return fontRenderer.getHeight();
+        return fontRenderer.getHeight() + 2;
     }
 
     public static void draw(String str, int x, int y, int color) {

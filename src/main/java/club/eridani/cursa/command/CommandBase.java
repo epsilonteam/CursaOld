@@ -2,14 +2,14 @@ package club.eridani.cursa.command;
 
 import net.minecraft.client.Minecraft;
 
-public abstract class CursaCommand {
+public abstract class CommandBase {
 
     private final String command;
     private final String description;
 
     public static final Minecraft mc = Minecraft.getMinecraft();
 
-    public CursaCommand() {
+    public CommandBase() {
         this.command = getAnnotation().command();
         this.description = getAnnotation().description();
     }

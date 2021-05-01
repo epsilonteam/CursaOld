@@ -8,14 +8,12 @@ import club.eridani.cursa.event.events.render.RenderWorldEvent;
 import club.eridani.cursa.setting.Setting;
 import club.eridani.cursa.setting.settings.*;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.client.event.RenderWorldLastEvent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class CursaModule {
+public class ModuleBase {
 
     public final String name;
     public final Category category;
@@ -30,7 +28,7 @@ public class CursaModule {
 
     public Minecraft mc = Minecraft.getMinecraft();
 
-    public CursaModule() {
+    public ModuleBase() {
         this.name = getAnnotation().name();
         this.category = getAnnotation().category();
         this.keyCode = getAnnotation().keyCode();
@@ -94,6 +92,9 @@ public class CursaModule {
     }
 
     public void onSettingChange(Setting<?> setting) {
+    }
+
+    public void onParallelTick(){
     }
 
     public Setting<Boolean> setting(String name, boolean defaultValue) {

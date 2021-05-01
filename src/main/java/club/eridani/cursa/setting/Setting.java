@@ -29,17 +29,21 @@ public class Setting<T> {
         value = valueIn;
     }
 
-    public Setting<T> v(BooleanSupplier booleanSupplier) {
+    public Setting<T> when(BooleanSupplier booleanSupplier) {
         this.visibilities.add(booleanSupplier);
         return this;
     }
 
-    public Setting<T> r(Setting<Boolean> booleanSetting) {
-        return v(() -> !booleanSetting.getValue());
+    public Setting<T> whenAtMode(Setting<String> modeSetting, String mode) {
+        return when(() -> modeSetting.getValue().equals(mode));
     }
 
-    public Setting<T> b(Setting<Boolean> booleanSetting) {
-        return v(booleanSetting::getValue);
+    public Setting<T> whenFalse(Setting<Boolean> booleanSetting) {
+        return when(() -> !booleanSetting.getValue());
+    }
+
+    public Setting<T> whenTrue(Setting<Boolean> booleanSetting) {
+        return when(booleanSetting::getValue);
     }
 
     public boolean isVisible() {

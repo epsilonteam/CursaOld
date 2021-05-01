@@ -2,7 +2,7 @@ package club.eridani.cursa.client;
 
 import club.eridani.cursa.Cursa;
 import club.eridani.cursa.gui.Panel;
-import club.eridani.cursa.module.CursaModule;
+import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
 import club.eridani.cursa.setting.settings.*;
 import com.google.gson.*;
@@ -24,35 +24,34 @@ public class ConfigManager {
     private final File GUI_FILE = new File(CONFIG_PATH + "Cursa_GUI.json");
     private final File MODULE_FILE = new File(CONFIG_PATH + "Cursa_Module.json");
 
-    private final List<File> configList = listOf(CLIENT_FILE, GUI_FILE, MODULE_FILE);;
+    private final List<File> configList = listOf(CLIENT_FILE, GUI_FILE, MODULE_FILE);
 
     boolean shouldSave = false;
 
-    public void shouldSave(){
+    public void shouldSave() {
         shouldSave = true;
     }
 
     public void onInit() {
         configList.forEach(it -> {
-            Cursa.log.error("Checking config files " + it.getName());
             if (!it.exists()) {
                 shouldSave();
             }
         });
-        if(shouldSave) saveAll();
-        loadAll();
+        if (shouldSave) saveAll();
     }
 
     public void saveModule() {
         try {
-            if(!MODULE_FILE.exists()){
+            if (!MODULE_FILE.exists()) {
                 MODULE_FILE.getParentFile().mkdirs();
-                try{
+                try {
                     MODULE_FILE.createNewFile();
-                } catch (Exception ignored){}
+                } catch (Exception ignored) {
+                }
             }
             JsonObject father = new JsonObject();
-            for (CursaModule module : ModuleManager.getModules()) {
+            for (ModuleBase module : ModuleManager.getModules()) {
                 JsonObject jsonModule = new JsonObject();
                 jsonModule.addProperty("Enabled", module.isEnabled());
                 jsonModule.addProperty("Bind", module.keyCode);
@@ -93,7 +92,7 @@ public class ConfigManager {
                 JsonObject moduleJason = (JsonObject) jsonParser.parse(loadJson);
                 loadJson.close();
                 for (Map.Entry<String, JsonElement> entry : moduleJason.entrySet()) {
-                    CursaModule module = ModuleManager.getModuleByName(entry.getKey());
+                    ModuleBase module = ModuleManager.getModuleByName(entry.getKey());
                     if (module != null) {
                         JsonObject jsonMod = (JsonObject) entry.getValue();
                         boolean enabled = jsonMod.get("Enabled").getAsBoolean();
@@ -109,21 +108,49 @@ public class ConfigManager {
                 Cursa.log.info("Error while loading module config");
                 e.printStackTrace();
             }
-        } else {
+        }
+    }
+
+    public void safeLoadModule() {
+        if (MODULE_FILE.exists()) {
             try {
-                MODULE_FILE.createNewFile();
-                saveModule();
-            } catch (IOException ignore) {}
+                BufferedReader loadJson = new BufferedReader(new FileReader(MODULE_FILE));
+                JsonObject moduleJason = (JsonObject) jsonParser.parse(loadJson);
+                loadJson.close();
+                for (Map.Entry<String, JsonElement> entry : moduleJason.entrySet()) {
+                    ModuleBase module = ModuleManager.getModuleByName(entry.getKey());
+                    if (module != null) {
+                        JsonObject jsonMod = (JsonObject) entry.getValue();
+                        boolean enabled = jsonMod.get("Enabled").getAsBoolean();
+                        if (module.isEnabled() && !enabled) module.disable();
+                        if (module.isDisabled() && enabled) module.enable();
+                        if (Cursa.MODULE_BUS.isRegistered(module)) {
+                            synchronized (Cursa.MODULE_BUS.getModules()) {
+                                if (!module.getSettings().isEmpty()) {
+                                    trySet(module, jsonMod);
+                                }
+                            }
+                        } else if (!module.getSettings().isEmpty()) {
+                            trySet(module, jsonMod);
+                        }
+                        module.keyCode = jsonMod.get("Bind").getAsInt();
+                    }
+                }
+            } catch (IOException e) {
+                Cursa.log.info("Error while loading module config");
+                e.printStackTrace();
+            }
         }
     }
 
     public void saveGUI() {
         try {
-            if(!GUI_FILE.exists()){
+            if (!GUI_FILE.exists()) {
                 GUI_FILE.getParentFile().mkdirs();
-                try{
+                try {
                     GUI_FILE.createNewFile();
-                } catch (Exception ignored){}
+                } catch (Exception ignored) {
+                }
             }
             JsonObject father = new JsonObject();
             for (Panel panel : GUIManager.guiRenderer.panels) {
@@ -166,11 +193,12 @@ public class ConfigManager {
 
     public void saveClient() {
         try {
-            if(!CLIENT_FILE.exists()){
+            if (!CLIENT_FILE.exists()) {
                 CLIENT_FILE.getParentFile().mkdirs();
-                try{
+                try {
                     CLIENT_FILE.createNewFile();
-                } catch (Exception ignored){}
+                } catch (Exception ignored) {
+                }
             }
 
             JsonObject father = new JsonObject();
@@ -206,11 +234,6 @@ public class ConfigManager {
                 Cursa.log.error("Error while loading client stuff!");
                 e.printStackTrace();
             }
-        } else {
-            try {
-                CLIENT_FILE.createNewFile();
-                saveClient();
-            } catch (IOException ignore) {}
         }
     }
 
@@ -223,10 +246,11 @@ public class ConfigManager {
     private void saveClientStuff(JsonObject father) {
         JsonObject stuff = new JsonObject();
         stuff.addProperty("CommandPrefix", CommandManager.cmdPrefix);
+        stuff.addProperty("ChatSuffix", Cursa.CHAT_SUFFIX);
         father.add("Client", stuff);
     }
 
-    private void trySet(CursaModule mods, JsonObject jsonMod) {
+    private void trySet(ModuleBase mods, JsonObject jsonMod) {
         try {
             for (Setting<?> setting : mods.getSettings()) {
                 tryValue(mods.name, setting, jsonMod);
@@ -239,6 +263,7 @@ public class ConfigManager {
     private void trySetClient(JsonObject json) {
         try {
             CommandManager.cmdPrefix = json.get("CommandPrefix").getAsString();
+            Cursa.CHAT_SUFFIX = json.get("ChatSuffix").getAsString();
         } catch (Exception e) {
             Cursa.log.error("Error while setting client!");
         }
@@ -272,6 +297,12 @@ public class ConfigManager {
         getInstance().saveClient();
         getInstance().saveGUI();
         getInstance().saveModule();
+    }
+
+    public static void safeLoadAll(){
+        getInstance().loadClient();
+        getInstance().loadGUI();
+        getInstance().safeLoadModule();
     }
 
     private static ConfigManager instance;

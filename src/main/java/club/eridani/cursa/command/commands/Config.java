@@ -2,7 +2,7 @@ package club.eridani.cursa.command.commands;
 
 import club.eridani.cursa.client.ConfigManager;
 import club.eridani.cursa.command.Command;
-import club.eridani.cursa.command.CursaCommand;
+import club.eridani.cursa.command.CommandBase;
 import club.eridani.cursa.utils.ChatUtil;
 
 /**
@@ -10,7 +10,7 @@ import club.eridani.cursa.utils.ChatUtil;
  * Updated by B_312 on 01/15/21
  */
 @Command(command = "config", description = "Save or load config.")
-public class Config extends CursaCommand {
+public class Config extends CommandBase {
 
     @Override
     public void onCall(String s, String[] args) {

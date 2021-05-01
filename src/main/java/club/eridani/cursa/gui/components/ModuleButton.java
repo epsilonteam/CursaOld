@@ -4,7 +4,7 @@ import club.eridani.cursa.client.FontManager;
 import club.eridani.cursa.client.GUIManager;
 import club.eridani.cursa.gui.Component;
 import club.eridani.cursa.gui.Panel;
-import club.eridani.cursa.module.CursaModule;
+import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.NumberSetting;
 import club.eridani.cursa.setting.Setting;
 import club.eridani.cursa.setting.settings.*;
@@ -18,9 +18,9 @@ import java.util.List;
 public class ModuleButton extends club.eridani.cursa.gui.Component {
 
     public List<club.eridani.cursa.gui.Component> settings = new ArrayList<>();
-    CursaModule module;
+    ModuleBase module;
 
-    public ModuleButton(CursaModule module, int width, int height, Panel father) {
+    public ModuleButton(ModuleBase module, int width, int height, Panel father) {
         this.module = module;
         this.width = width;
         this.height = height;

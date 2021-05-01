@@ -3,18 +3,18 @@ package club.eridani.cursa.client;
 import club.eridani.cursa.Cursa;
 import club.eridani.cursa.event.events.client.KeyEvent;
 import club.eridani.cursa.event.system.Listener;
-import club.eridani.cursa.module.CursaModule;
+import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.utils.ClassUtil;
 
 import java.util.*;
 
 public class ModuleManager {
 
-    public Map<Class<? extends CursaModule>, CursaModule> moduleMap = new HashMap<>();
+    public Map<Class<? extends ModuleBase>, ModuleBase> moduleMap = new HashMap<>();
 
     private static ModuleManager instance;
 
-    public static List<CursaModule> getModules() {
+    public static List<ModuleBase> getModules() {
         return new ArrayList<>(getInstance().moduleMap.values());
     }
 
@@ -37,12 +37,12 @@ public class ModuleManager {
         return instance;
     }
 
-    public static CursaModule getModule(Class<? extends CursaModule> clazz) {
+    public static ModuleBase getModule(Class<? extends ModuleBase> clazz) {
         return getInstance().moduleMap.get(clazz);
     }
 
-    public static CursaModule getModuleByName(String targetName) {
-        for (CursaModule module : getModules()) {
+    public static ModuleBase getModuleByName(String targetName) {
+        for (ModuleBase module : getModules()) {
             if (module.name.equalsIgnoreCase(targetName)) {
                 return module;
             }
@@ -52,11 +52,11 @@ public class ModuleManager {
     }
 
     private void loadModules() {
-        List<CursaModule> tempList = new ArrayList<>();
-        Set<Class<? extends CursaModule>> classList = ClassUtil.findClasses(CursaModule.class.getPackage().getName(), CursaModule.class);
+        List<ModuleBase> tempList = new ArrayList<>();
+        Set<Class<? extends ModuleBase>> classList = ClassUtil.findClasses(ModuleBase.class.getPackage().getName(), ModuleBase.class);
         classList.stream().sorted(Comparator.comparing(Class::getSimpleName)).forEach(clazz -> {
             try {
-                CursaModule module = clazz.newInstance();
+                ModuleBase module = clazz.newInstance();
                 tempList.add(module);
             } catch (Exception e) {
                 e.printStackTrace();

@@ -39,12 +39,14 @@ public class MixinMinecraft {
         int key = Keyboard.getEventKey();
         char ch = Keyboard.getEventCharacter();
 
-        Cursa.EVENT_BUS.post(down ? new KeyEvent(key, ch) : new InputUpdateEvent(key, ch));
+        //Prevent from toggling all modules,when switching languages.
+        if(key != Keyboard.KEY_NONE)
+            Cursa.EVENT_BUS.post(down ? new KeyEvent(key, ch) : new InputUpdateEvent(key, ch));
     }
 
     @Inject(method = "runTick", at = @At("RETURN"))
     public void onTick(CallbackInfo ci) {
-        Cursa.EVENT_BUS.post(new TickEvent());
+        if (Minecraft.getMinecraft().player != null) Cursa.EVENT_BUS.post(new TickEvent());
     }
 
     @Inject(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;checkGLError(Ljava/lang/String;)V", ordinal = 0, shift = At.Shift.AFTER))

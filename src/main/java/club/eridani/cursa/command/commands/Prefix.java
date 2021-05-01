@@ -3,7 +3,7 @@ package club.eridani.cursa.command.commands;
 
 import club.eridani.cursa.client.CommandManager;
 import club.eridani.cursa.command.Command;
-import club.eridani.cursa.command.CursaCommand;
+import club.eridani.cursa.command.CommandBase;
 import club.eridani.cursa.utils.ChatUtil;
 import club.eridani.cursa.utils.SoundUtil;
 
@@ -12,7 +12,7 @@ import club.eridani.cursa.utils.SoundUtil;
  * Updated by B_312 on 01/15/21
  */
 @Command(command = "prefix", description = "Set command prefix.")
-public class Prefix extends CursaCommand {
+public class Prefix extends CommandBase {
 
     @Override
     public void onCall(String s, String[] args) {

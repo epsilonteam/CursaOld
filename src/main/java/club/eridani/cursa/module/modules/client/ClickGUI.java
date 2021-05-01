@@ -3,12 +3,12 @@ package club.eridani.cursa.module.modules.client;
 import club.eridani.cursa.client.ConfigManager;
 import club.eridani.cursa.gui.CursaClickGUI;
 import club.eridani.cursa.module.Category;
-import club.eridani.cursa.module.CursaModule;
+import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.module.Module;
 import org.lwjgl.input.Keyboard;
 
 @Module(name = "ClickGUI", category = Category.CLIENT, keyCode = Keyboard.KEY_O)
-public class ClickGUI extends CursaModule {
+public class ClickGUI extends ModuleBase {
 
     @Override
     public void onEnable() {

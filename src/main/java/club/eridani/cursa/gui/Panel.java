@@ -6,7 +6,7 @@ import club.eridani.cursa.gui.components.ModuleButton;
 import club.eridani.cursa.gui.font.CFontRenderer;
 import club.eridani.cursa.client.ModuleManager;
 import club.eridani.cursa.module.Category;
-import club.eridani.cursa.module.CursaModule;
+import club.eridani.cursa.module.ModuleBase;
 import net.minecraft.client.gui.Gui;
 
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ public class Panel {
     }
 
     public void setup() {
-        for (CursaModule m : ModuleManager.getModules()) {
+        for (ModuleBase m : ModuleManager.getModules()) {
             if (m.category == category) {
                 elements.add(new ModuleButton(m, width, height, this));
             }

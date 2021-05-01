@@ -2,13 +2,13 @@ package club.eridani.cursa.command.commands;
 
 import club.eridani.cursa.client.ModuleManager;
 import club.eridani.cursa.command.Command;
-import club.eridani.cursa.command.CursaCommand;
-import club.eridani.cursa.module.CursaModule;
+import club.eridani.cursa.command.CommandBase;
+import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.utils.ChatUtil;
 import org.lwjgl.input.Keyboard;
 
 @Command(command = "bind", description = "Set module bind key.")
-public class Bind extends CursaCommand {
+public class Bind extends CommandBase {
 
     @Override
     public void onCall(String s, String[] args) {
@@ -22,7 +22,7 @@ public class Bind extends CursaCommand {
             String module = args[0];
             String rKey = args[1];
 
-            CursaModule m = ModuleManager.getModuleByName(module);
+            ModuleBase m = ModuleManager.getModuleByName(module);
 
             if (m == null) {
                 ChatUtil.sendNoSpamMessage("Unknown module '" + module + "'!");

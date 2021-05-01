@@ -4,7 +4,7 @@ import club.eridani.cursa.client.GUIManager;
 import club.eridani.cursa.gui.Component;
 import club.eridani.cursa.gui.Panel;
 import club.eridani.cursa.client.ModuleManager;
-import club.eridani.cursa.module.CursaModule;
+import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.module.modules.client.ClickGUI;
 import club.eridani.cursa.utils.SoundUtil;
 import net.minecraft.client.gui.Gui;
@@ -12,10 +12,10 @@ import org.lwjgl.input.Keyboard;
 
 public class BindButton extends Component {
 
-    CursaModule module;
+    ModuleBase module;
     boolean accepting = false;
 
-    public BindButton(CursaModule module, int width, int height, Panel father) {
+    public BindButton(ModuleBase module, int width, int height, Panel father) {
         this.module = module;
         this.width = width;
         this.height = height;

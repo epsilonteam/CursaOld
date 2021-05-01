@@ -1,6 +1,7 @@
 package club.eridani.cursa.client;
 
 import club.eridani.cursa.Cursa;
+import club.eridani.cursa.concurrent.Syncer;
 import club.eridani.cursa.event.events.client.InputUpdateEvent;
 import club.eridani.cursa.event.events.client.SettingUpdateEvent;
 import club.eridani.cursa.event.events.client.TickEvent;
@@ -8,10 +9,13 @@ import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.event.events.render.RenderOverlayEvent;
 import club.eridani.cursa.event.events.render.RenderWorldEvent;
 import club.eridani.cursa.event.system.Listener;
-import club.eridani.cursa.module.CursaModule;
+import club.eridani.cursa.module.ModuleBase;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static club.eridani.cursa.concurrent.TaskManager.launch;
+import static club.eridani.cursa.concurrent.TaskManager.runBlocking;
 
 public class ModuleBus {
 
@@ -19,19 +23,23 @@ public class ModuleBus {
         Cursa.EVENT_BUS.register(this);
     }
 
-    private final List<CursaModule> modules = new CopyOnWriteArrayList<>();
+    private final List<ModuleBase> modules = new CopyOnWriteArrayList<>();
 
-    public void register(CursaModule module) {
+    public void register(ModuleBase module) {
         modules.add(module);
         Cursa.EVENT_BUS.register(module);
     }
 
-    public void unregister(CursaModule module) {
+    public void unregister(ModuleBase module) {
         modules.remove(module);
         Cursa.EVENT_BUS.unregister(module);
     }
 
-    public List<CursaModule> getModules() {
+    public boolean isRegistered(ModuleBase module) {
+        return modules.contains(module);
+    }
+
+    public List<ModuleBase> getModules() {
         return modules;
     }
 
@@ -42,12 +50,19 @@ public class ModuleBus {
 
     @Listener
     public void onTick(TickEvent event) {
-        modules.forEach(CursaModule::onTick);
+        modules.forEach(ModuleBase::onTick);
+
+        runBlocking(() -> {
+            Syncer syncer = new Syncer(modules.size());
+            modules.forEach(it -> launch(syncer, it::onParallelTick));
+            syncer.await();
+        });
+
     }
 
     @Listener
     public void onRenderTick(RenderOverlayEvent event) {
-        modules.forEach(CursaModule::onRenderTick);
+        modules.forEach(ModuleBase::onRenderTick);
     }
 
     @Listener

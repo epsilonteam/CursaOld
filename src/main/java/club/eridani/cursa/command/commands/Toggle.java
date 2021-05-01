@@ -2,7 +2,7 @@ package club.eridani.cursa.command.commands;
 
 import club.eridani.cursa.client.ModuleManager;
 import club.eridani.cursa.command.Command;
-import club.eridani.cursa.command.CursaCommand;
+import club.eridani.cursa.command.CommandBase;
 import club.eridani.cursa.utils.ChatUtil;
 
 import java.util.Objects;
@@ -12,7 +12,7 @@ import java.util.Objects;
  * Updated by B_312 on 01/15/21
  */
 @Command(command = "toggle",description = "Toggle selected module or HUD.")
-public class Toggle extends CursaCommand {
+public class Toggle extends CommandBase {
 
     @Override
     public void onCall(String s, String[] args) {

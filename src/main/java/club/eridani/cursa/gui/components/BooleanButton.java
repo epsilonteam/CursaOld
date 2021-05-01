@@ -33,7 +33,6 @@ public class BooleanButton extends Component {
 
     }
 
-
     @Override
     public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
         if (!setting.isVisible() || !isHovered(mouseX, mouseY))

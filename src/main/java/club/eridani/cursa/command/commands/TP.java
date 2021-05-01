@@ -2,7 +2,7 @@ package club.eridani.cursa.command.commands;
 
 
 import club.eridani.cursa.command.Command;
-import club.eridani.cursa.command.CursaCommand;
+import club.eridani.cursa.command.CommandBase;
 import club.eridani.cursa.utils.ChatUtil;
 
 /**
@@ -10,7 +10,7 @@ import club.eridani.cursa.utils.ChatUtil;
  * Updated by B_312 on 01/15/21
  */
 @Command(command = "tp", description = "Teleport you to the place you want.")
-public class TP extends CursaCommand {
+public class TP extends CommandBase {
 
     @Override
     public void onCall(String s, String[] args) {

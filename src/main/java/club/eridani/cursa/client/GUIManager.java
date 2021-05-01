@@ -20,6 +20,10 @@ public class GUIManager {
         return guiSetting.particle.getValue();
     }
 
+    public static boolean isRainbow(){
+        return guiSetting.rainbow.getValue();
+    }
+
     public static int getRed(){
         return ColorUtil.getRed(getColor3I());
     }

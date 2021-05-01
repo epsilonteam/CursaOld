@@ -1,7 +1,7 @@
 package club.eridani.cursa.client;
 
 import club.eridani.cursa.Cursa;
-import club.eridani.cursa.command.CursaCommand;
+import club.eridani.cursa.command.CommandBase;
 import club.eridani.cursa.event.events.client.ChatEvent;
 import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.utils.ChatUtil;
@@ -15,7 +15,7 @@ import java.util.Set;
 public class CommandManager {
 
     public static String cmdPrefix = ".";
-    public List<CursaCommand> commands = new ArrayList<>();
+    public List<CommandBase> commands = new ArrayList<>();
 
     public static void init() {
         if (instance == null) instance = new CommandManager();
@@ -25,10 +25,10 @@ public class CommandManager {
     }
 
     private void loadCommands() {
-        Set<Class<? extends CursaCommand>> classList = ClassUtil.findClasses(CursaCommand.class.getPackage().getName(), CursaCommand.class);
+        Set<Class<? extends CommandBase>> classList = ClassUtil.findClasses(CommandBase.class.getPackage().getName(), CommandBase.class);
         classList.stream().sorted(Comparator.comparing(Class::getSimpleName)).forEach(clazz -> {
             try {
-                CursaCommand command = clazz.newInstance();
+                CommandBase command = clazz.newInstance();
                 commands.add(command);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -52,7 +52,7 @@ public class CommandManager {
         String commandName = hasArgs ? readString.split(" ")[0] : readString.trim();
         String[] args = hasArgs ? readString.substring(commandName.length()).trim().split(" ") : new String[0];
 
-        for (CursaCommand command : commands) {
+        for (CommandBase command : commands) {
             if (command.getCommand().trim().equalsIgnoreCase(commandName.trim().toLowerCase())) {
                 command.onCall(readString, args);
                 commandResolved = true;
