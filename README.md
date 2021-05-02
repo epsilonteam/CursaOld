@@ -7,4 +7,4 @@ It has a concurrent executor,dont use OpenGL in it!
 ## License
 MIT
 
-you are free to use this base to build your own utility mod.
+you are free to use this base to build your own utility mod.But you should credit Eridani Team.
