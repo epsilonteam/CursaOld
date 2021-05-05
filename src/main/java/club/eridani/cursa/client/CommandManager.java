@@ -12,6 +12,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
+import static club.eridani.cursa.concurrent.TaskManager.launch;
+
 public class CommandManager {
 
     public static String cmdPrefix = ".";
@@ -40,7 +42,7 @@ public class CommandManager {
     @Listener
     public void onChat(ChatEvent event) {
         if (event.getMessage().startsWith(cmdPrefix)) {
-            runCommands(event.getMessage());
+            launch(() -> runCommands(event.getMessage()));
             event.cancel();
         }
     }

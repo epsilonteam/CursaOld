@@ -13,7 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import static club.eridani.cursa.concurrent.repeat.RepeatManager.runRepeat;
+import static club.eridani.cursa.concurrent.TaskManager.runRepeat;
 import static club.eridani.cursa.utils.FileUtil.readTextFileAllLines;
 
 @Module(name = "Spammer", category = Category.MISC)
@@ -28,9 +28,9 @@ public class Spammer extends ModuleBase {
     private static final List<String> spamMessages = new ArrayList<>();
     private static final Random rnd = new Random();
 
-    RepeatUnit fileChangeListener = new RepeatUnit(1000, run -> readSpamFile());
+    RepeatUnit fileChangeListener = new RepeatUnit(1000, this::readSpamFile);
 
-    RepeatUnit runner = new RepeatUnit(() -> delay.getValue() * 1000, run -> {
+    RepeatUnit runner = new RepeatUnit(() -> delay.getValue() * 1000, () -> {
         if (mc.player == null) {
             disable();
         } else if (spamMessages.size() > 0) {

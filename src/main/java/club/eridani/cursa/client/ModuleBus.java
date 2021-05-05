@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static club.eridani.cursa.concurrent.TaskManager.launch;
-import static club.eridani.cursa.concurrent.TaskManager.runBlocking;
 
 
 public class ModuleBus {
@@ -51,31 +50,22 @@ public class ModuleBus {
 
     @Listener
     public void onTick(TickEvent event) {
-        runBlocking(blocking -> {
-            Syncer syncer = new Syncer(modules.size());
-            modules.forEach(it -> launch(syncer, launching -> it.onParallelTick()));
-            syncer.await();
-        });
+        Syncer syncer = new Syncer(modules.size());
+        modules.forEach(it -> launch(syncer, it::onParallelTick));
+        syncer.await();
         modules.forEach(ModuleBase::onTick);
     }
 
     @Listener
     public void onRenderTick(RenderOverlayEvent event) {
-        runBlocking(blocking -> {
-            Syncer syncer = new Syncer(modules.size());
-            modules.forEach(it -> launch(syncer, launching -> it.onParallelRenderTick()));
-            syncer.await();
-        });
+        Syncer syncer = new Syncer(modules.size());
+        modules.forEach(it -> launch(syncer, it::onParallelRenderTick));
+        syncer.await();
         modules.forEach(ModuleBase::onRenderTick);
     }
 
     @Listener
     public void onRender(RenderOverlayEvent event) {
-        runBlocking(blocking -> {
-            Syncer syncer = new Syncer(modules.size());
-            modules.forEach(it -> launch(syncer, launching -> it.onParallelTick()));
-            syncer.await();
-        });
         modules.forEach(it -> it.onRender(event));
     }
 
@@ -86,31 +76,25 @@ public class ModuleBus {
 
     @Listener
     public void onPacketSend(PacketEvent.Send event) {
-        runBlocking(blocking -> {
-            Syncer syncer = new Syncer(modules.size());
-            modules.forEach(it -> launch(syncer, it::onParallelPacketSend,event));
-            syncer.await();
-        });
+        Syncer syncer = new Syncer(modules.size());
+        modules.forEach(it -> launch(syncer, it::onParallelPacketSend, event));
+        syncer.await();
         modules.forEach(it -> it.onPacketSend(event));
     }
 
     @Listener
     public void onPacketReceive(PacketEvent.Receive event) {
-        runBlocking(blocking -> {
-            Syncer syncer = new Syncer(modules.size());
-            modules.forEach(it -> launch(syncer, it::onParallelPacketReceive,event));
-            syncer.await();
-        });
+        Syncer syncer = new Syncer(modules.size());
+        modules.forEach(it -> launch(syncer, it::onParallelPacketReceive, event));
+        syncer.await();
         modules.forEach(it -> it.onPacketReceive(event));
     }
 
     @Listener
     public void onSettingChange(SettingUpdateEvent event) {
-        runBlocking(blocking -> {
-            Syncer syncer = new Syncer(modules.size());
-            modules.forEach(it -> launch(syncer, it::onParallelSettingChange,event.getSetting()));
-            syncer.await();
-        });
+        Syncer syncer = new Syncer(modules.size());
+        modules.forEach(it -> launch(syncer, it::onParallelSettingChange, event.getSetting()));
+        syncer.await();
         modules.forEach(it -> it.onSettingChange(event.getSetting()));
     }
 

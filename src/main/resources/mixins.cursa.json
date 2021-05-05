@@ -7,8 +7,7 @@
     "client.MixinMinecraft",
     "entity.MixinEntityPlayerSP",
     "network.MixinNetWork",
-    "render.MixinEntityRenderer",
-    "render.MixinGuiIngame"
+    "render.MixinEntityRenderer"
   ],
   "client": [
     "render.MixinModelBiped"

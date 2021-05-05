@@ -22,4 +22,5 @@ public class NumberSetting<T extends Number> extends Setting<T> {
     public boolean isInRange(Number valueIn) {
         return valueIn.doubleValue() <= max.doubleValue() && valueIn.doubleValue() >= min.doubleValue();
     }
+
 }

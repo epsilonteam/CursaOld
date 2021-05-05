@@ -11,7 +11,6 @@ import club.eridani.cursa.setting.Setting;
 import club.eridani.cursa.utils.RenderHelper;
 
 import java.awt.*;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,9 +34,6 @@ public class ActiveModuleList extends ModuleBase {
 
         List<ModuleBase> moduleList = Cursa.MODULE_BUS.getModules().stream()
                 .sorted(Comparator.comparing(it -> -FontManager.getWidth(it.name))).collect(Collectors.toList());
-
-        if(listPos.getValue().equals("LeftDown") || listPos.getValue().equals("RightDown"))
-            Collections.reverse(moduleList);
 
         for (ModuleBase module : moduleList) {
             int color = GUIManager.isRainbow() ? rainbow(index * 100) : GUIManager.getColor3I();

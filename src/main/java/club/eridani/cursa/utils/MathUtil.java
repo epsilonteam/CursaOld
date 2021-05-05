@@ -10,4 +10,14 @@ public class MathUtil {
         }
         return val;
     }
+
+    public static long clamp(long val, final long min, final long max) {
+        if (val <= min) {
+            val = min;
+        }
+        if (val >= max) {
+            val = max;
+        }
+        return val;
+    }
 }

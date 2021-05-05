@@ -119,7 +119,7 @@ jar {
                 'FMLCorePluginContainsFMLMod': 'true',
                 'FMLCorePlugin': 'club.eridani.cursa.mixin.MixinLoader',
                 'ForceLoadAsMod': 'true',
-                'FMLAT': 'sexy_at.cfg'
+                'FMLAT': 'cursa_at.cfg'
         )
     }
 

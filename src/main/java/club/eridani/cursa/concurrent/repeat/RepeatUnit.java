@@ -1,6 +1,6 @@
 package club.eridani.cursa.concurrent.repeat;
 
-import club.eridani.cursa.concurrent.tasks.ObjectTask;
+import club.eridani.cursa.concurrent.task.VoidTask;
 import club.eridani.cursa.concurrent.utils.Timer;
 
 import java.util.function.IntSupplier;
@@ -10,17 +10,17 @@ import java.util.function.IntSupplier;
  */
 public class RepeatUnit {
 
-    ObjectTask task;
+    VoidTask task;
 
     private volatile boolean isRunning = true;
     private volatile boolean isDead = false;
     public final IntSupplier delay;
     private final Timer timer = new Timer();
-    private final TimeOutOperation timeOutOperation;
+    private final VoidTask timeOutOperation;
     private int times = 0;
     private boolean isDelayTask = false;
 
-    public RepeatUnit(int delay, ObjectTask task) {
+    public RepeatUnit(int delay, VoidTask task) {
         this.task = task;
         this.delay = () -> delay;
         this.timeOutOperation = () -> {
@@ -28,7 +28,7 @@ public class RepeatUnit {
         this.times += Integer.MAX_VALUE;
     }
 
-    public RepeatUnit(int delay, int times, ObjectTask task) {
+    public RepeatUnit(int delay, int times, VoidTask task) {
         this.task = task;
         this.delay = () -> delay;
         this.timeOutOperation = () -> {
@@ -36,7 +36,7 @@ public class RepeatUnit {
         this.times += times;
     }
 
-    public RepeatUnit(int delay, int times, boolean isDelayTask, ObjectTask task) {
+    public RepeatUnit(int delay, int times, boolean isDelayTask, VoidTask task) {
         this.task = task;
         this.delay = () -> delay;
         this.timeOutOperation = () -> {
@@ -45,7 +45,7 @@ public class RepeatUnit {
         this.isDelayTask = isDelayTask;
     }
 
-    public RepeatUnit(IntSupplier delay, ObjectTask task) {
+    public RepeatUnit(IntSupplier delay, VoidTask task) {
         this.task = task;
         this.delay = delay;
         this.timeOutOperation = () -> {
@@ -53,7 +53,7 @@ public class RepeatUnit {
         this.times += Integer.MAX_VALUE;
     }
 
-    public RepeatUnit(IntSupplier delay, int times, ObjectTask task) {
+    public RepeatUnit(IntSupplier delay, int times, VoidTask task) {
         this.task = task;
         this.delay = delay;
         this.timeOutOperation = () -> {
@@ -61,21 +61,21 @@ public class RepeatUnit {
         this.times += times;
     }
 
-    public RepeatUnit(int delay, TimeOutOperation timeOutOperation, ObjectTask task) {
+    public RepeatUnit(int delay, VoidTask timeOutOperation, VoidTask task) {
         this.task = task;
         this.delay = () -> delay;
         this.timeOutOperation = timeOutOperation;
         this.times += Integer.MAX_VALUE;
     }
 
-    public RepeatUnit(int delay, int times, TimeOutOperation timeOutOperation, ObjectTask task) {
+    public RepeatUnit(int delay, int times, VoidTask timeOutOperation, VoidTask task) {
         this.task = task;
         this.delay = () -> delay;
         this.timeOutOperation = timeOutOperation;
         this.times += times;
     }
 
-    public RepeatUnit(IntSupplier delay, int times, TimeOutOperation timeOutOperation, ObjectTask task) {
+    public RepeatUnit(IntSupplier delay, int times, VoidTask timeOutOperation, VoidTask task) {
         this.task = task;
         this.delay = delay;
         this.timeOutOperation = timeOutOperation;
@@ -89,7 +89,7 @@ public class RepeatUnit {
         }
         if (isRunning && !isDead && task != null) {
             if (times > 0) {
-                task.invoke(null);
+                task.invoke();
                 if (timer.passed(delay.getAsInt())) {
                     timeOutOperation.invoke();
                     suspend();

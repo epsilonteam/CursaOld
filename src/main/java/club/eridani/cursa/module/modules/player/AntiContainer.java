@@ -1,10 +1,9 @@
 package club.eridani.cursa.module.modules.player;
 
 import club.eridani.cursa.event.events.network.PacketEvent;
-import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.module.Category;
-import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.module.Module;
+import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
 import net.minecraft.block.BlockShulkerBox;
 import net.minecraft.client.Minecraft;

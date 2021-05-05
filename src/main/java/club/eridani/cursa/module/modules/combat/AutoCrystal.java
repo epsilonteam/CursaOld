@@ -15,6 +15,7 @@ import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
 import club.eridani.cursa.utils.Timer;
 import club.eridani.cursa.utils.*;
+import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -22,9 +23,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.item.EntityEnderCrystal;
-import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.init.MobEffects;
@@ -47,8 +46,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static club.eridani.cursa.concurrent.TaskManager.launch;
-import static club.eridani.cursa.concurrent.TaskManager.runBlocking;
-import static club.eridani.cursa.concurrent.repeat.RepeatManager.runRepeat;
+import static club.eridani.cursa.concurrent.TaskManager.runRepeat;
 import static club.eridani.cursa.utils.MathUtil.clamp;
 import static org.lwjgl.opengl.GL11.GL_QUADS;
 
@@ -121,7 +119,7 @@ public class AutoCrystal extends ModuleBase {
     Timer breakTimer = new Timer();
     private final HashMap<BlockPos, Double> renderBlockDmg = new HashMap<>();
 
-    RepeatUnit rotationUpdate = new RepeatUnit(10, updateRotation -> launch(launch -> {
+    RepeatUnit rotationUpdate = new RepeatUnit(10, () -> {
         if (mc.player == null || mc.world == null) return;
         if (rotate.getValue()) {
             if (rotating) {
@@ -129,27 +127,26 @@ public class AutoCrystal extends ModuleBase {
                 mc.player.renderYawOffset = (float) yaw;
             }
         }
-    }));
+    });
 
-    RepeatUnit calculation = new RepeatUnit(() -> clamp(Math.min((int) ((1000 / placeSpeed.getValue()) - 5), (int) ((1000 / attackSpeed.getValue()) - 5)), 1, Integer.MAX_VALUE),
-            placeCalculation -> runBlocking(blocking -> {
-                Syncer syncer = new Syncer(2);
-                launch(syncer, launch -> {
-                    if (mc.player == null || mc.world == null) return;
-                    List<Entity> entities = new ArrayList<>(mc.world.loadedEntityList);
-                    AutoCrystal.attackCrystalTarget = entities.stream()
-                            .filter(e -> e instanceof EntityEnderCrystal && canHitCrystal((EntityEnderCrystal) e))
-                            .map(e -> (EntityEnderCrystal) e)
-                            .min(Comparator.comparing(e -> mc.player.getDistance(e))).orElse(null);
-                });
-                launch(syncer, launch -> {
-                    if (mc.player == null || mc.world == null) return;
-                    if (multiPlace.getValue()) {
-                        AutoCrystal.placeTarget = Calculator();
-                    }
-                });
-                syncer.await();
-            })
+    RepeatUnit calculation = new RepeatUnit(() -> clamp(Math.min((int) ((1000 / placeSpeed.getValue()) - 5), (int) ((1000 / attackSpeed.getValue()) - 5)), 1, Integer.MAX_VALUE), () -> {
+        Syncer syncer = new Syncer(2);
+        launch(syncer, launch -> {
+            if (mc.player == null || mc.world == null) return;
+            List<Entity> entities = new ArrayList<>(mc.world.loadedEntityList);
+            AutoCrystal.attackCrystalTarget = entities.stream()
+                    .filter(e -> e instanceof EntityEnderCrystal && canHitCrystal((EntityEnderCrystal) e))
+                    .map(e -> (EntityEnderCrystal) e)
+                    .min(Comparator.comparing(e -> mc.player.getDistance(e))).orElse(null);
+        });
+        launch(syncer, launch -> {
+            if (mc.player == null || mc.world == null) return;
+            if (multiPlace.getValue()) {
+                AutoCrystal.placeTarget = Calculator();
+            }
+        });
+        syncer.await();
+    }
     );
 
     List<RepeatUnit> repeatUnits = new ArrayList<>();
@@ -301,13 +298,9 @@ public class AutoCrystal extends ModuleBase {
 
     private List<BlockPos> findCrystalBlocks(double range) {
         NonNullList<BlockPos> positions = NonNullList.create();
-        try {
-            positions.addAll(BlockInteractionHelper.getSphere(getPlayerPos(), (float) range, (int) range, false, true, 0)
-                    .stream()
-                    .filter(v -> canPlaceCrystal(v, oneThirtyPlace.getValue())).collect(Collectors.toList()));
-        } catch (Exception ignore) {
-            return findCrystalBlocks(range);
-        }
+        positions.addAll(BlockInteractionHelper.getSphere(getPlayerPos(), (float) range, (int) range, false, true, 0)
+                .stream()
+                .filter(v -> canPlaceCrystal(v, oneThirtyPlace.getValue())).collect(Collectors.toList()));
         return positions;
     }
 
@@ -377,24 +370,33 @@ public class AutoCrystal extends ModuleBase {
         BlockPos boost = blockPos.add(0, 1, 0);
         BlockPos boost2 = blockPos.add(0, 2, 0);
 
-        if (mc.world.getBlockState(blockPos).getBlock() != Blocks.BEDROCK && mc.world.getBlockState(blockPos).getBlock() != Blocks.OBSIDIAN)
-            return false;
+        Block base = mc.world.getBlockState(blockPos).getBlock();
+        Block b1 = mc.world.getBlockState(boost).getBlock();
+        Block b2 = mc.world.getBlockState(boost2).getBlock();
 
-        if (!newPlace) {
-            if (mc.world.getBlockState(boost).getBlock() != Blocks.AIR || mc.world.getBlockState(boost2).getBlock() != Blocks.AIR)
-                return false;
-        } else if (mc.world.getBlockState(boost).getBlock() != Blocks.AIR) return false;
+        if (base != Blocks.BEDROCK && base != Blocks.OBSIDIAN) return false;
 
-        AxisAlignedBB b1 = new AxisAlignedBB(boost);
-        AxisAlignedBB b2 = new AxisAlignedBB(boost2);
+        if (b1 != Blocks.AIR && !isReplaceable(b1)) return false;
+        if (newPlace && b2 != Blocks.AIR) return false;
 
-        if (shouldIgnoreEntity && ! multiPlace.getValue()) {
-            return !(!mc.world.getEntitiesWithinAABB(EntityItem.class, b1).isEmpty()
-                    || !mc.world.getEntitiesWithinAABB(EntityPlayer.class, b1).isEmpty()
-                    || !mc.world.getEntitiesWithinAABB(EntityPlayer.class, b2).isEmpty()
-                    || !mc.world.getEntitiesWithinAABB(EntityArrow.class, b1).isEmpty());
-        } else return mc.world.getEntitiesWithinAABB(Entity.class, b1).isEmpty()
-                && mc.world.getEntitiesWithinAABB(Entity.class, b2).isEmpty();
+        AxisAlignedBB box = new AxisAlignedBB(
+                blockPos.x, blockPos.y + 1.0, blockPos.z,
+                blockPos.x + 1.0, blockPos.y + 3.0, blockPos.z + 1.0
+        );
+
+        List<Entity> entities = new ArrayList<>(mc.world.loadedEntityList);
+
+        for (Entity entity : entities) {
+            if (shouldIgnoreEntity && !multiPlace.getValue() && entity instanceof EntityEnderCrystal) continue;
+            if (entity.getEntityBoundingBox().intersects(box)) return false;
+        }
+        return true;
+    }
+
+    public boolean isReplaceable(Block block) {
+        return block == Blocks.FIRE
+                || block == Blocks.DOUBLE_PLANT
+                || block == Blocks.VINE;
     }
 
     public static double getRange(Vec3d a, double x, double y, double z) {
@@ -469,7 +471,7 @@ public class AutoCrystal extends ModuleBase {
             damage = CombatRules.getDamageAfterAbsorb(damage, (float) entity.getTotalArmorValue(), (float) entity.getEntityAttribute(SharedMonsterAttributes.ARMOR_TOUGHNESS).getAttributeValue());
             return damage;
         } catch (Exception ignored) {
-            return getBlastReduction(entity,damage,explosion);
+            return getBlastReduction(entity, damage, explosion);
         }
     }
 
@@ -522,7 +524,7 @@ public class AutoCrystal extends ModuleBase {
 
     volatile boolean shouldIgnoreEntity = false;
 
-    RepeatUnit updateAutoCrystal = new RepeatUnit(10, updateRotation -> launch(update -> {
+    RepeatUnit updateAutoCrystal = new RepeatUnit(10, () -> {
         if (mc.player == null || mc.world == null) return;
 
         if (placeTimer.passed(1050) || breakTimer.passed(1050)) rotating = false;
@@ -531,7 +533,7 @@ public class AutoCrystal extends ModuleBase {
         if (autoExplode.getValue() && attackCrystalTarget != null) {
             if (!mc.player.canEntityBeSeen(attackCrystalTarget) && mc.player.getDistance(attackCrystalTarget) > wallRange.getValue() && wall.getValue()) {
                 shouldIgnoreEntity = false;
-            } else{
+            } else {
                 explodeCrystal(attackCrystalTarget);
                 attackCrystalTarget = null;
                 if (!multiPlace.getValue()) shouldIgnoreEntity = true;
@@ -602,7 +604,7 @@ public class AutoCrystal extends ModuleBase {
             mc.player.inventory.currentItem = prevSlot;
             mc.playerController.updateController();
         }
-    }));
+    });
 
     /**
      * Calculation of target block to place crystal

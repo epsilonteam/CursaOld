@@ -1,5 +1,8 @@
 package club.eridani.cursa.concurrent.utils;
 
+/**
+ * Created by B_312 on 05/01/2021
+ */
 public final class Timer {
 
     private long time;

@@ -1,18 +1,17 @@
 package club.eridani.cursa;
 
 import club.eridani.cursa.client.*;
-import club.eridani.cursa.concurrent.Task;
 import club.eridani.cursa.concurrent.TaskManager;
-import club.eridani.cursa.concurrent.tasks.ConfigOperateTask;
 import club.eridani.cursa.event.events.client.InitializationEvent;
 import club.eridani.cursa.event.system.EventManager;
 import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.event.system.impl.annotated.AnnotatedEventManager;
+import club.eridani.cursa.tasks.ConfigOperateTask;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.Display;
 
-import static club.eridani.cursa.concurrent.TaskManager.runBackground;
+import static club.eridani.cursa.concurrent.TaskManager.launch;
 
 public class Cursa {
 
@@ -49,7 +48,7 @@ public class Cursa {
     @Listener
     public void postInitialize(InitializationEvent.PostInitialize event) {
         ConfigManager.init();
-        runBackground(new ConfigOperateTask(ConfigOperateTask.Operation.Load));
+        launch(new ConfigOperateTask(ConfigOperateTask.Operation.Load));
     }
 
     public static EventManager EVENT_BUS = new AnnotatedEventManager();
