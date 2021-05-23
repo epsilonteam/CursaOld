@@ -7,6 +7,7 @@ import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.utils.ClassUtil;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ModuleManager {
 
@@ -15,7 +16,7 @@ public class ModuleManager {
     private static ModuleManager instance;
 
     public static List<ModuleBase> getModules() {
-        return new ArrayList<>(getInstance().moduleMap.values());
+        return getInstance().moduleMap.values().stream().sorted(Comparator.comparing(it -> it.name)).collect(Collectors.toList());
     }
 
     public static void init() {
