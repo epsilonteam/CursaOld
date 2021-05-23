@@ -1,7 +1,7 @@
 package club.eridani.cursa.concurrent.repeat;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static club.eridani.cursa.concurrent.TaskManager.launch;
 
@@ -16,17 +16,15 @@ public class RepeatManager {
         if (instance == null) instance = new RepeatManager();
     }
 
-    public final List<RepeatUnit> repeatUnits = new ArrayList<>();
+    public final List<RepeatUnit> repeatUnits = new CopyOnWriteArrayList<>();
 
     public static void update() {
-        synchronized (instance.repeatUnits) {
-            instance.repeatUnits.removeIf(RepeatUnit::isDead);
-            instance.repeatUnits.forEach(it -> {
-                if (it.shouldRun()) {
-                    launch(it::run);
-                }
-            });
-        }
+        instance.repeatUnits.removeIf(RepeatUnit::isDead);
+        instance.repeatUnits.forEach(it -> {
+            if (it.shouldRun()) {
+                launch(it::run);
+            }
+        });
     }
 
 }

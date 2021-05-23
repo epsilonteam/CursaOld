@@ -1,44 +1,89 @@
 package club.eridani.cursa.concurrent.task;
 
-import java.util.concurrent.CountDownLatch;
+import club.eridani.cursa.concurrent.utils.Syncer;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by B_312 on 05/01/2021
  */
-public class TaskRunnable<T> implements Runnable {
+public class TaskRunnable<T> extends TaskUnit implements Runnable {
 
     private final Task<T> task;
-    private final CountDownLatch latch;
-    private final T parameter;
+    private final List<T> parameters = new ArrayList<>();
+
+    private EventTask<T> eventTask = null;
+    private T eventParameter = null;
+
+    public TaskRunnable(EventTask<T> eventTask) {
+        this.eventTask = eventTask;
+        this.task = null;
+        this.syncer = null;
+    }
+
+    public TaskRunnable(EventTask<T> eventTask, Syncer syncer) {
+        this.eventTask = eventTask;
+        this.syncer = syncer;
+        this.task = null;
+        this.syncer = null;
+    }
+
+    public TaskRunnable(T eventParameter, EventTask<T> eventTask) {
+        this.eventTask = eventTask;
+        this.eventParameter = eventParameter;
+        this.task = null;
+        this.syncer = null;
+    }
+
+    public TaskRunnable(EventTask<T> eventTask, Syncer syncer, T eventParameter) {
+        this.eventTask = eventTask;
+        this.eventParameter = eventParameter;
+        this.syncer = syncer;
+        this.task = null;
+        this.syncer = null;
+    }
 
     public TaskRunnable(Task<T> task) {
         this.task = task;
-        this.latch = null;
-        this.parameter = null;
+        this.syncer = null;
     }
 
-    public TaskRunnable(Task<T> task, CountDownLatch latch) {
+    public TaskRunnable(Task<T> task, Syncer syncer) {
         this.task = task;
-        this.latch = latch;
-        this.parameter = null;
+        this.syncer = syncer;
     }
 
     public TaskRunnable(T parameter, Task<T> task) {
         this.task = task;
-        this.latch = null;
-        this.parameter = parameter;
+        this.syncer = null;
+        this.parameters.add(parameter);
     }
 
-    public TaskRunnable(Task<T> task, CountDownLatch latch, T parameter) {
+    public TaskRunnable(Task<T> task, Syncer syncer, T parameter) {
         this.task = task;
-        this.latch = latch;
-        this.parameter = parameter;
+        this.syncer = syncer;
+        this.parameters.add(parameter);
+    }
+
+    public TaskRunnable(T[] parameters, Task<T> task) {
+        this.task = task;
+        this.syncer = null;
+        this.parameters.addAll(Arrays.asList(parameters));
+    }
+
+    public TaskRunnable(Task<T> task, Syncer syncer, T[] parameters) {
+        this.task = task;
+        this.syncer = syncer;
+        this.parameters.addAll(Arrays.asList(parameters));
     }
 
     @Override
     public void run() {
-        task.invoke(parameter);
-        if (latch != null) latch.countDown();
+        if (eventTask != null) eventTask.invoke(eventParameter);
+        else if (task != null) task.invoke(parameters);
+        if (syncer != null) syncer.countDown();
     }
 
 }

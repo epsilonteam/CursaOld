@@ -97,15 +97,6 @@ public class ModuleBase {
     public void onParallelTick(){
     }
 
-    public void onParallelPacketSend(PacketEvent.Send event){
-    }
-
-    public void onParallelPacketReceive(PacketEvent.Receive event){
-    }
-
-    public void onParallelSettingChange(Setting<?> event){
-    }
-
     public void onParallelRenderTick(){
     }
 

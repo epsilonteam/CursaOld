@@ -35,7 +35,7 @@ public class AntiOverlay extends ModuleBase {
     }
 
     @Override
-    public void onParallelPacketReceive(PacketEvent.Receive event) {
+    public void onPacketReceive(PacketEvent.Receive event) {
         Packet<?> packet = event.packet;
         if ((packet instanceof SPacketSpawnExperienceOrb && xp.getValue())
                 || (packet instanceof SPacketExplosion && explosion.getValue())

@@ -23,7 +23,7 @@ public class Velocity extends ModuleBase {
     public final Minecraft mc = Minecraft.getMinecraft();
 
     @Override
-    public void onParallelPacketReceive(PacketEvent.Receive event) {
+    public void onPacketReceive(PacketEvent.Receive event) {
         if(mc.player == null) return;
         if (event.packet instanceof SPacketEntityStatus && this.bobbers.getValue()) {
             final SPacketEntityStatus packet = (SPacketEntityStatus) event.packet;

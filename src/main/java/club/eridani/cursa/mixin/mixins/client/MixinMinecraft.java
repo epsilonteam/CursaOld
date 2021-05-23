@@ -30,6 +30,11 @@ public class MixinMinecraft {
         }
     }
 
+    @Inject(method = "runGameLoop",at = @At("HEAD"))
+    public void runGameLoop(CallbackInfo ci){
+        Cursa.EVENT_BUS.post(new GameLoopEvent());
+    }
+
     @Inject(method = "runTickKeyboard", at = @At(value = "INVOKE_ASSIGN", target = "org/lwjgl/input/Keyboard.getEventKeyState()Z", remap = false))
     private void onKeyEvent(CallbackInfo ci) {
         if (currentScreen != null)

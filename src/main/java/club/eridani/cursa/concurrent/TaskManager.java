@@ -2,10 +2,7 @@ package club.eridani.cursa.concurrent;
 
 import club.eridani.cursa.concurrent.repeat.RepeatManager;
 import club.eridani.cursa.concurrent.repeat.RepeatUnit;
-import club.eridani.cursa.concurrent.task.Task;
-import club.eridani.cursa.concurrent.task.TaskRunnable;
-import club.eridani.cursa.concurrent.task.VoidRunnable;
-import club.eridani.cursa.concurrent.task.VoidTask;
+import club.eridani.cursa.concurrent.task.*;
 import club.eridani.cursa.concurrent.thread.BackgroundMainThread;
 import club.eridani.cursa.concurrent.utils.Syncer;
 import org.apache.logging.log4j.LogManager;
@@ -42,48 +39,48 @@ public class TaskManager {
 
     //---- TaskPool Runner ----//
     public static void runBlocking(List<VoidTask> tasks) {
-        CountDownLatch latch = new CountDownLatch(tasks.size());
-        tasks.forEach(it -> instance.executor.execute(new VoidRunnable(it, latch)));
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        Syncer syncer = new Syncer(tasks.size());
+        tasks.forEach(it -> instance.executor.execute(new VoidRunnable(it, syncer)));
+        syncer.await();
     }
 
-    public static <T> void runParameterBlocking(List<Task<T>> tasks, T parameter) {
-        CountDownLatch latch = new CountDownLatch(tasks.size());
-        tasks.forEach(it -> instance.executor.execute(new TaskRunnable<>(it, latch, parameter)));
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    public static <T> void runParameterBlocking(List<Task<T>> tasks, T[] parameters) {
+        Syncer syncer = new Syncer(tasks.size());
+        tasks.forEach(it -> instance.executor.execute(new TaskRunnable<>(it, syncer, parameters)));
+        syncer.await();
     }
 
     public static void launch(VoidTask task) {
         instance.executor.execute(new VoidRunnable(task));
     }
 
-    public static <T> void launch(Syncer syncer, Task<T> task, T parameter) {
-        instance.executor.execute(new TaskRunnable<>(task, syncer.getLatch(), parameter));
+    public static <T> void launch(Syncer syncer, T parameters, EventTask<T> task) {
+        instance.executor.execute(new TaskRunnable<>(task, syncer, parameters));
     }
 
-    public static <T> void launch(T parameter, Task<T> task) {
+    public static <T> void launch(T parameter, EventTask<T> task) {
         instance.executor.execute(new TaskRunnable<>(parameter, task));
     }
 
-    public static void launch(CountDownLatch latch, VoidTask task) {
-        instance.executor.execute(new VoidRunnable(task, latch));
+    public static <T> void launch(Syncer syncer, T[] parameters, Task<T> task) {
+        instance.executor.execute(new TaskRunnable<>(task, syncer, parameters));
+    }
+
+    public static <T> void launch(T[] parameters, Task<T> task) {
+        instance.executor.execute(new TaskRunnable<>(parameters, task));
     }
 
     public static void launch(Syncer syncer, VoidTask task) {
-        instance.executor.execute(new VoidRunnable(task, syncer.getLatch()));
+        instance.executor.execute(new VoidRunnable(task, syncer));
     }
 
     //---- Delay Runner ----//
-    public static <T> void addDelayTask(int delay, T parameter, Task<T> task) {
+    public static <T> void addDelayTask(int delay, T parameter, EventTask<T> task) {
         runRepeat(delay, 1, true, () -> launch(parameter, task));
+    }
+
+    public static <T> void addDelayTask(int delay, T[] parameters, Task<T> task) {
+        runRepeat(delay, 1, true, () -> launch(parameters, task));
     }
 
     public static void addDelayTask(int delay, VoidTask task) {
@@ -121,15 +118,11 @@ public class TaskManager {
     }
 
     public static void registerRepeatUnit(RepeatUnit repeatUnit) {
-        synchronized (RepeatManager.instance.repeatUnits) {
-            RepeatManager.instance.repeatUnits.add(repeatUnit);
-        }
+        RepeatManager.instance.repeatUnits.add(repeatUnit);
     }
 
     public static void unregisterRepeatUnit(RepeatUnit repeatUnit) {
-        synchronized (RepeatManager.instance.repeatUnits) {
-            RepeatManager.instance.repeatUnits.remove(repeatUnit);
-        }
+        RepeatManager.instance.repeatUnits.remove(repeatUnit);
     }
 
     //---- Background Stuff ----//

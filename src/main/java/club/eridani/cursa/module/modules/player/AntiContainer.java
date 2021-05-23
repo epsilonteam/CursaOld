@@ -28,7 +28,7 @@ public class AntiContainer extends ModuleBase {
     Setting<Boolean> ShulkerBox = setting("ShulkerBox", true);
 
     @Override
-    public void onParallelPacketSend(PacketEvent.Send packet) {
+    public void onPacketSend(PacketEvent.Send packet) {
         if (packet.packet instanceof CPacketPlayerTryUseItemOnBlock) {
             BlockPos pos = ((CPacketPlayerTryUseItemOnBlock) packet.packet).getPos();
             if (check(pos)) packet.cancel();

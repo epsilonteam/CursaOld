@@ -1,29 +1,29 @@
 package club.eridani.cursa.concurrent.task;
 
-import java.util.concurrent.CountDownLatch;
+import club.eridani.cursa.concurrent.utils.Syncer;
 
 /**
  * Created by B_312 on 05/01/2021
  */
-public class VoidRunnable implements Runnable {
+public class VoidRunnable extends TaskUnit implements Runnable {
 
     private final VoidTask task;
-    private final CountDownLatch latch;
+    private final Syncer syncer;
 
     public VoidRunnable(VoidTask task) {
         this.task = task;
-        this.latch = null;
+        this.syncer = null;
     }
 
-    public VoidRunnable(VoidTask task, CountDownLatch latch) {
+    public VoidRunnable(VoidTask task, Syncer syncer) {
         this.task = task;
-        this.latch = latch;
+        this.syncer = syncer;
     }
 
     @Override
     public void run() {
         task.invoke();
-        if (latch != null) latch.countDown();
+        if (syncer != null) syncer.countDown();
     }
 
 }

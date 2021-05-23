@@ -30,7 +30,6 @@ import net.minecraft.init.MobEffects;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.CPacketPlayer;
 import net.minecraft.network.play.client.CPacketPlayerTryUseItemOnBlock;
 import net.minecraft.network.play.server.SPacketSoundEffect;
@@ -52,10 +51,10 @@ import static org.lwjgl.opengl.GL11.GL_QUADS;
 
 /**
  * Created by B_312 on 01/15/21
- * Updated by B_312 on 05/02/21
+ * Updated by B_312 on 05/23/21
  */
-@Module(name = "AutoCrystal", category = Category.COMBAT)
-public class AutoCrystal extends ModuleBase {
+@Module(name = "CursaAura", category = Category.COMBAT)
+public class CursaAura extends ModuleBase {
 
     Setting<String> page = setting("Page", "General", listOf("General", "Calculation", "Render"));
 
@@ -103,10 +102,10 @@ public class AutoCrystal extends ModuleBase {
     Setting<Float> saturation = setting("Saturation", 0.65f, 0.0f, 1.0f).whenAtMode(page, "Render").whenFalse(syncGUI);
     Setting<Float> brightness = setting("Brightness", 1.0f, 0.0f, 1.0f).whenAtMode(page, "Render").whenFalse(syncGUI);
 
-    public static double yaw;
-    public static double pitch;
-    public static double renderPitch;
-    public static boolean isSpoofingAngles;
+    public static float yaw;
+    public static float pitch;
+    public static float renderPitch;
+    public static boolean shouldSpoofPacket;
     public static Entity target;
     private int placements = 0;
     private int oldSlot = -1;
@@ -119,40 +118,28 @@ public class AutoCrystal extends ModuleBase {
     Timer breakTimer = new Timer();
     private final HashMap<BlockPos, Double> renderBlockDmg = new HashMap<>();
 
-    RepeatUnit rotationUpdate = new RepeatUnit(10, () -> {
-        if (mc.player == null || mc.world == null) return;
-        if (rotate.getValue()) {
-            if (rotating) {
-                mc.player.rotationYawHead = (float) yaw;
-                mc.player.renderYawOffset = (float) yaw;
-            }
-        }
-    });
-
     RepeatUnit calculation = new RepeatUnit(() -> clamp(Math.min((int) ((1000 / placeSpeed.getValue()) - 5), (int) ((1000 / attackSpeed.getValue()) - 5)), 1, Integer.MAX_VALUE), () -> {
         Syncer syncer = new Syncer(2);
-        launch(syncer, launch -> {
+        launch(syncer, () -> {
             if (mc.player == null || mc.world == null) return;
             List<Entity> entities = new ArrayList<>(mc.world.loadedEntityList);
-            AutoCrystal.attackCrystalTarget = entities.stream()
-                    .filter(e -> e instanceof EntityEnderCrystal && canHitCrystal((EntityEnderCrystal) e))
+            CursaAura.attackCrystalTarget = entities.stream()
+                    .filter(e -> e instanceof EntityEnderCrystal && canHitCrystal(e.getPositionVector()))
                     .map(e -> (EntityEnderCrystal) e)
                     .min(Comparator.comparing(e -> mc.player.getDistance(e))).orElse(null);
         });
-        launch(syncer, launch -> {
+        launch(syncer, () -> {
             if (mc.player == null || mc.world == null) return;
             if (multiPlace.getValue()) {
-                AutoCrystal.placeTarget = Calculator();
+                CursaAura.placeTarget = Calculator();
             }
         });
         syncer.await();
-    }
-    );
+    });
 
     List<RepeatUnit> repeatUnits = new ArrayList<>();
 
-    public AutoCrystal() {
-        repeatUnits.add(rotationUpdate);
+    public CursaAura() {
         repeatUnits.add(calculation);
         repeatUnits.add(updateAutoCrystal);
 
@@ -164,7 +151,7 @@ public class AutoCrystal extends ModuleBase {
     }
 
     @Override
-    public void onParallelPacketReceive(PacketEvent.Receive event) {
+    public void onPacketReceive(PacketEvent.Receive event) {
         if (mc.player == null) return;
         //Clear click delay
         if (mc.player.getHeldItemMainhand().getItem() == Items.END_CRYSTAL || mc.player.getHeldItemOffhand().getItem() == Items.END_CRYSTAL) {
@@ -174,8 +161,7 @@ public class AutoCrystal extends ModuleBase {
         if (event.packet instanceof SPacketSoundEffect) {
             final SPacketSoundEffect packet = (SPacketSoundEffect) event.packet;
             if (packet.getCategory() == SoundCategory.BLOCKS && packet.getSound() == SoundEvents.ENTITY_GENERIC_EXPLODE) {
-                List<Entity> crystals = new ArrayList<>(mc.world.loadedEntityList);
-                crystals.stream()
+                mc.world.loadedEntityList.stream()
                         .filter(it -> it instanceof EntityEnderCrystal)
                         .filter(it -> it.getDistance(packet.getX(), packet.getY(), packet.getZ()) <= 6.0f)
                         .forEach(Entity::setDead);
@@ -189,23 +175,23 @@ public class AutoCrystal extends ModuleBase {
         //Update pitch
         if (rotating) {
             event.rotating = true;
-            event.pitch = (float) renderPitch;
+            event.pitch = renderPitch;
         }
     }
 
     @Override
-    public void onParallelPacketSend(PacketEvent.Send event) {
+    public void onPacketSend(PacketEvent.Send event) {
         if (mc.player == null) return;
-        Packet<?> packet = event.packet;
         if (!rotate.getValue()) {
             return;
         }
         //Spoof rotation packets
-        if (packet instanceof CPacketPlayer) {
-            if (isSpoofingAngles) {
-                ((CPacketPlayer) packet).yaw = (float) yaw;
-                ((CPacketPlayer) packet).pitch = (float) pitch;
-                isSpoofingAngles = false;
+        if (event.packet instanceof CPacketPlayer) {
+            CPacketPlayer packet = (CPacketPlayer) event.packet;
+            if (shouldSpoofPacket) {
+                packet.yaw = yaw;
+                packet.pitch = pitch;
+                shouldSpoofPacket = false;
             }
         }
     }
@@ -215,10 +201,10 @@ public class AutoCrystal extends ModuleBase {
      * Calculation of explosion
      * If return true,then we can explode it.
      */
-    private boolean canHitCrystal(EntityEnderCrystal crystal) {
-        if (mc.player.getDistance(crystal) > hitRange.getValue()) return false;
+    private boolean canHitCrystal(Vec3d crystal) {
+        if (mc.player.getDistance(crystal.x, crystal.y, crystal.z) > hitRange.getValue()) return false;
         if (attackMode.getValue().equals("Smart")) {
-            float selfDamage = calculateDamage(crystal.posX, crystal.posY, crystal.posZ, mc.player, mc.player.getPositionVector());
+            float selfDamage = calculateDamage(crystal.x, crystal.y, crystal.z, mc.player, mc.player.getPositionVector());
             if (selfDamage >= mc.player.getHealth() + mc.player.getAbsorptionAmount()) return false;
             List<EntityPlayer> entities = new ArrayList<>(mc.world.playerEntities);
             entities = entities.stream()
@@ -234,7 +220,7 @@ public class AutoCrystal extends ModuleBase {
                 if (canFacePlace(player, blastHealth.getValue())) {
                     minDamage = 1;
                 }
-                double target = calculateDamage(crystal.posX, crystal.posY, crystal.posZ, player, player.getPositionVector());
+                double target = calculateDamage(crystal.x, crystal.y, crystal.z, player, player.getPositionVector());
                 //If we can pop enemies totem,then we try it!
                 if (target > player.getHealth() + player.getAbsorptionAmount()
                         && selfDamage < mc.player.getHealth() + mc.player.getAbsorptionAmount()
@@ -250,10 +236,10 @@ public class AutoCrystal extends ModuleBase {
     }
 
     private void resetRotation() {
-        if (isSpoofingAngles) {
+        if (shouldSpoofPacket) {
             yaw = mc.player.rotationYaw;
             pitch = mc.player.rotationPitch;
-            isSpoofingAngles = false;
+            shouldSpoofPacket = false;
             rotating = false;
         }
     }
@@ -422,7 +408,9 @@ public class AutoCrystal extends ModuleBase {
         yaw = yaw1;
         pitch = pitch1;
         renderPitch = renderPitch1;
-        isSpoofingAngles = true;
+        mc.player.rotationYawHead = yaw;
+        mc.player.renderYawOffset = yaw;
+        shouldSpoofPacket = true;
         rotating = true;
     }
 
@@ -589,9 +577,10 @@ public class AutoCrystal extends ModuleBase {
                 switchCoolDown = false;
                 return;
             }
+            if (ghostHand.getValue()) ghostHand();
             placeCrystal(targetBlock, enumHand);
         }
-        if (rotate.getValue() && isSpoofingAngles) {
+        if (rotate.getValue() && shouldSpoofPacket) {
             if (togglePitch) {
                 mc.player.rotationPitch += 0.0004;
                 togglePitch = false;
@@ -651,7 +640,6 @@ public class AutoCrystal extends ModuleBase {
                     target = entity2;
 
                     if (renderDmg.getValue()) renderBlockDmg.put(tempBlock, targetDamage);
-                    if (ghostHand.getValue()) ghostHand();
                 }
                 if (target != null) break;
             }
@@ -716,8 +704,6 @@ public class AutoCrystal extends ModuleBase {
     public void onEnable() {
         shouldIgnoreEntity = false;
         repeatUnits.forEach(RepeatUnit::resume);
-        placeTimer.reset();
-        breakTimer.reset();
         renderBlockDmg.clear();
     }
 
@@ -726,6 +712,8 @@ public class AutoCrystal extends ModuleBase {
         repeatUnits.forEach(RepeatUnit::suspend);
         rotating = false;
         resetRotation();
+        placeTimer.reset();
+        breakTimer.reset();
         renderBlock = null;
         target = null;
         yaw = mc.player.rotationYaw;

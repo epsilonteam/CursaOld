@@ -14,7 +14,7 @@ public class CustomChat extends ModuleBase {
     Setting<Boolean> commands = setting("Commands", false);
 
     @Override
-    public void onParallelPacketSend(PacketEvent.Send event){
+    public void onPacketSend(PacketEvent.Send event){
         if (event.getPacket() instanceof CPacketChatMessage) {
             String s = ((CPacketChatMessage) event.getPacket()).getMessage();
             if (s.startsWith("/") && !commands.getValue()) return;

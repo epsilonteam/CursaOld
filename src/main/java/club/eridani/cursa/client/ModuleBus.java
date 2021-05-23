@@ -16,7 +16,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static club.eridani.cursa.concurrent.TaskManager.launch;
 
-
 public class ModuleBus {
 
     public ModuleBus() {
@@ -50,18 +49,20 @@ public class ModuleBus {
 
     @Listener
     public void onTick(TickEvent event) {
-        Syncer syncer = new Syncer(modules.size());
+        modules.forEach(ModuleBase::onTick);
+        Syncer syncer;
+        syncer = new Syncer(modules.size());
         modules.forEach(it -> launch(syncer, it::onParallelTick));
         syncer.await();
-        modules.forEach(ModuleBase::onTick);
     }
 
     @Listener
     public void onRenderTick(RenderOverlayEvent event) {
-        Syncer syncer = new Syncer(modules.size());
+        modules.forEach(ModuleBase::onRenderTick);
+        Syncer syncer;
+        syncer = new Syncer(modules.size());
         modules.forEach(it -> launch(syncer, it::onParallelRenderTick));
         syncer.await();
-        modules.forEach(ModuleBase::onRenderTick);
     }
 
     @Listener
@@ -76,25 +77,16 @@ public class ModuleBus {
 
     @Listener
     public void onPacketSend(PacketEvent.Send event) {
-        Syncer syncer = new Syncer(modules.size());
-        modules.forEach(it -> launch(syncer, it::onParallelPacketSend, event));
-        syncer.await();
         modules.forEach(it -> it.onPacketSend(event));
     }
 
     @Listener
     public void onPacketReceive(PacketEvent.Receive event) {
-        Syncer syncer = new Syncer(modules.size());
-        modules.forEach(it -> launch(syncer, it::onParallelPacketReceive, event));
-        syncer.await();
         modules.forEach(it -> it.onPacketReceive(event));
     }
 
     @Listener
     public void onSettingChange(SettingUpdateEvent event) {
-        Syncer syncer = new Syncer(modules.size());
-        modules.forEach(it -> launch(syncer, it::onParallelSettingChange, event.getSetting()));
-        syncer.await();
         modules.forEach(it -> it.onSettingChange(event.getSetting()));
     }
 
