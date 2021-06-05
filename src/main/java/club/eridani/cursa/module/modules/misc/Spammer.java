@@ -1,8 +1,9 @@
 package club.eridani.cursa.module.modules.misc;
 
+import club.eridani.cursa.common.annotations.Module;
+import club.eridani.cursa.common.annotations.ParallelLoadable;
 import club.eridani.cursa.concurrent.repeat.RepeatUnit;
 import club.eridani.cursa.module.Category;
-import club.eridani.cursa.module.Module;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
 import net.minecraft.network.play.client.CPacketChatMessage;
@@ -16,6 +17,7 @@ import java.util.Random;
 import static club.eridani.cursa.concurrent.TaskManager.runRepeat;
 import static club.eridani.cursa.utils.FileUtil.readTextFileAllLines;
 
+@ParallelLoadable
 @Module(name = "Spammer", category = Category.MISC)
 public class Spammer extends ModuleBase {
 

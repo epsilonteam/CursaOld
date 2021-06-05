@@ -1,7 +1,8 @@
 package club.eridani.cursa.module.modules.player;
 
+import club.eridani.cursa.common.annotations.Module;
+import club.eridani.cursa.common.annotations.ParallelLoadable;
 import club.eridani.cursa.module.Category;
-import club.eridani.cursa.module.Module;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
 import com.mojang.authlib.GameProfile;
@@ -10,6 +11,7 @@ import net.minecraft.potion.PotionEffect;
 
 import java.util.UUID;
 
+@ParallelLoadable
 @Module(name = "FakePlayer",category = Category.PLAYER)
 public class FakePlayer extends ModuleBase {
 

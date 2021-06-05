@@ -1,13 +1,16 @@
 package club.eridani.cursa.module.modules.misc;
 
+import club.eridani.cursa.common.annotations.Module;
+import club.eridani.cursa.common.annotations.ParallelLoadable;
+import club.eridani.cursa.common.annotations.ParallelRunnable;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
-import club.eridani.cursa.module.Module;
 import club.eridani.cursa.setting.Setting;
 import net.minecraft.entity.player.EnumPlayerModelParts;
 
 import java.util.Random;
 
+@ParallelLoadable
 @Module(name = "SkinFlicker", category = Category.MISC)
 public class SkinFlicker extends ModuleBase {
 
@@ -35,7 +38,7 @@ public class SkinFlicker extends ModuleBase {
     private final Random r = new Random();
     private final int len = EnumPlayerModelParts.values().length;
 
-    @Override
+    @ParallelRunnable
     public void onParallelTick() {
         if(mc.player == null) return;
         switch (mode.getValue()) {

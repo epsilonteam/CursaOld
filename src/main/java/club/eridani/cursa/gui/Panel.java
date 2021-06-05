@@ -90,7 +90,7 @@ public class Panel {
             x2 = this.x - mouseX;
             y2 = this.y - mouseY;
             dragging = true;
-            Collections.swap(GUIManager.guiRenderer.panels, 0, GUIManager.guiRenderer.panels.indexOf(this));
+            Collections.swap(GUIRenderer.instance.panels, 0, GUIRenderer.instance.panels.indexOf(this));
             return true;
         }
         if (mouseButton == 1 && isHovered(mouseX, mouseY)) {

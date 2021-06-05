@@ -1,6 +1,7 @@
 package club.eridani.cursa.client;
 
 import club.eridani.cursa.Cursa;
+import club.eridani.cursa.gui.GUIRenderer;
 import club.eridani.cursa.gui.Panel;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.module.modules.player.FakePlayer;
@@ -154,7 +155,7 @@ public class ConfigManager {
                 }
             }
             JsonObject father = new JsonObject();
-            for (Panel panel : GUIManager.guiRenderer.panels) {
+            for (Panel panel : GUIRenderer.instance.panels) {
                 JsonObject jsonGui = new JsonObject();
                 jsonGui.addProperty("X", panel.x);
                 jsonGui.addProperty("Y", panel.y);
@@ -177,7 +178,7 @@ public class ConfigManager {
                 JsonObject guiJson = (JsonObject) jsonParser.parse(loadJson);
                 loadJson.close();
                 for (Map.Entry<String, JsonElement> entry : guiJson.entrySet()) {
-                    Panel panel = GUIManager.guiRenderer.getPanelByName(entry.getKey());
+                    Panel panel = GUIRenderer.instance.getPanelByName(entry.getKey());
                     if (panel != null) {
                         JsonObject jsonGui = (JsonObject) entry.getValue();
                         panel.x = jsonGui.get("X").getAsInt();

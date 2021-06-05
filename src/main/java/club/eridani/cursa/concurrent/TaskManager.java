@@ -5,6 +5,7 @@ import club.eridani.cursa.concurrent.repeat.RepeatUnit;
 import club.eridani.cursa.concurrent.task.*;
 import club.eridani.cursa.concurrent.thread.BackgroundMainThread;
 import club.eridani.cursa.concurrent.utils.Syncer;
+import club.eridani.cursa.tasks.Tasks;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -48,6 +49,10 @@ public class TaskManager {
         Syncer syncer = new Syncer(tasks.size());
         tasks.forEach(it -> instance.executor.execute(new TaskRunnable<>(it, syncer, parameters)));
         syncer.await();
+    }
+
+    public static void launch(Tasks tasks) {
+        instance.executor.execute(new VoidRunnable(tasks.task));
     }
 
     public static void launch(VoidTask task) {

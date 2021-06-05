@@ -16,31 +16,25 @@ public class RepeatUnit {
     private volatile boolean isDead = false;
     public final IntSupplier delay;
     private final Timer timer = new Timer();
-    private final VoidTask timeOutOperation;
+    private VoidTask timeOutOperation = null;
     private int times = 0;
     private boolean isDelayTask = false;
 
     public RepeatUnit(int delay, VoidTask task) {
         this.task = task;
         this.delay = () -> delay;
-        this.timeOutOperation = () -> {
-        };
         this.times += Integer.MAX_VALUE;
     }
 
     public RepeatUnit(int delay, int times, VoidTask task) {
         this.task = task;
         this.delay = () -> delay;
-        this.timeOutOperation = () -> {
-        };
         this.times += times;
     }
 
     public RepeatUnit(int delay, int times, boolean isDelayTask, VoidTask task) {
         this.task = task;
         this.delay = () -> delay;
-        this.timeOutOperation = () -> {
-        };
         this.times += times;
         this.isDelayTask = isDelayTask;
     }
@@ -48,16 +42,12 @@ public class RepeatUnit {
     public RepeatUnit(IntSupplier delay, VoidTask task) {
         this.task = task;
         this.delay = delay;
-        this.timeOutOperation = () -> {
-        };
         this.times += Integer.MAX_VALUE;
     }
 
     public RepeatUnit(IntSupplier delay, int times, VoidTask task) {
         this.task = task;
         this.delay = delay;
-        this.timeOutOperation = () -> {
-        };
         this.times += times;
     }
 
@@ -90,7 +80,7 @@ public class RepeatUnit {
         if (isRunning && !isDead && task != null) {
             if (times > 0) {
                 task.invoke();
-                if (timer.passed(delay.getAsInt())) {
+                if (timeOutOperation != null && timer.passed(delay.getAsInt())) {
                     timeOutOperation.invoke();
                     suspend();
                 }

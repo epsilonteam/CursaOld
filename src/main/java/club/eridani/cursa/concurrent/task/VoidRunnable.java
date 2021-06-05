@@ -22,7 +22,10 @@ public class VoidRunnable extends TaskUnit implements Runnable {
 
     @Override
     public void run() {
-        task.invoke();
+        try {
+            task.invoke();
+        } catch (Exception ignore){
+        }
         if (syncer != null) syncer.countDown();
     }
 

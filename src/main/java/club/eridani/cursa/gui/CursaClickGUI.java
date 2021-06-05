@@ -52,21 +52,21 @@ public class CursaClickGUI extends GuiScreen {
             particleSystem.render();
         }
 
-        GUIManager.guiRenderer.drawScreen(mouseX, mouseY, partialTicks);
+        GUIRenderer.instance.drawScreen(mouseX, mouseY, partialTicks);
     }
 
     @Override
     public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
-        GUIManager.guiRenderer.mouseClicked(mouseX, mouseY, mouseButton);
+        GUIRenderer.instance.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
     @Override
     public void keyTyped(char typedChar, int keyCode) {
-        GUIManager.guiRenderer.keyTyped(typedChar, keyCode);
+        GUIRenderer.instance.keyTyped(typedChar, keyCode);
     }
 
     @Override
     public void mouseReleased(int mouseX, int mouseY, int state) {
-        GUIManager.guiRenderer.mouseReleased(mouseX, mouseY, state);
+        GUIRenderer.instance.mouseReleased(mouseX, mouseY, state);
     }
 }

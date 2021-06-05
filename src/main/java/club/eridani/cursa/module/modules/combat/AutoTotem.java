@@ -1,8 +1,11 @@
 package club.eridani.cursa.module.modules.combat;
 
+import club.eridani.cursa.common.annotations.Module;
+import club.eridani.cursa.common.annotations.ParallelLoadable;
+import club.eridani.cursa.common.annotations.ParallelRunnable;
+import club.eridani.cursa.common.types.Tick;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
-import club.eridani.cursa.module.Module;
 import club.eridani.cursa.setting.Setting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -15,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@ParallelLoadable
 @Module(name = "AutoTotem",category = Category.COMBAT)
 public class AutoTotem extends ModuleBase {
 
@@ -26,7 +30,7 @@ public class AutoTotem extends ModuleBase {
     private int preferredTotemSlot;
 	public static Minecraft mc = Minecraft.getMinecraft();
 
-    @Override
+    @ParallelRunnable(type = Tick.Loop)
     public void onParallelTick() {
 
         if (mc.player == null) {

@@ -1,8 +1,8 @@
 package club.eridani.cursa.command.commands;
 
 import club.eridani.cursa.client.FriendManager;
-import club.eridani.cursa.command.Command;
 import club.eridani.cursa.command.CommandBase;
+import club.eridani.cursa.common.annotations.Command;
 import club.eridani.cursa.utils.ChatUtil;
 import club.eridani.cursa.utils.EntityUtil;
 import net.minecraft.client.Minecraft;

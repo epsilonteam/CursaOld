@@ -1,6 +1,5 @@
 package club.eridani.cursa.client;
 
-import club.eridani.cursa.gui.GUIRenderer;
 import club.eridani.cursa.module.modules.client.GUI;
 import club.eridani.cursa.utils.ColorUtil;
 
@@ -9,11 +8,9 @@ import java.awt.*;
 public class GUIManager {
 
     public static GUI guiSetting;
-    public static GUIRenderer guiRenderer;
 
     public static void init(){
         guiSetting = (GUI) ModuleManager.getModule(GUI.class);
-        guiRenderer = new GUIRenderer();
     }
 
     public static boolean isParticle(){
@@ -82,7 +79,7 @@ public class GUIManager {
         Shadow,
         Blur,
         Both,
-        None;
+        None
     }
 
 }

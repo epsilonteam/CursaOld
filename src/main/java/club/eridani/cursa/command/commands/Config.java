@@ -1,8 +1,8 @@
 package club.eridani.cursa.command.commands;
 
-import club.eridani.cursa.command.Command;
 import club.eridani.cursa.command.CommandBase;
-import club.eridani.cursa.tasks.ConfigOperateTask;
+import club.eridani.cursa.common.annotations.Command;
+import club.eridani.cursa.tasks.Tasks;
 import club.eridani.cursa.utils.ChatUtil;
 
 import static club.eridani.cursa.concurrent.TaskManager.launch;
@@ -36,12 +36,12 @@ public class Config extends CommandBase {
     }
 
     public void load() {
-        launch(new ConfigOperateTask(ConfigOperateTask.Operation.Load));
+        launch(Tasks.LoadConfig);
         ChatUtil.sendNoSpamMessage("Configuration reloaded!");
     }
 
     public void save() {
-        launch(new ConfigOperateTask(ConfigOperateTask.Operation.Save));
+        launch(Tasks.SaveConfig);
         ChatUtil.sendNoSpamMessage("Configuration saved!");
     }
 

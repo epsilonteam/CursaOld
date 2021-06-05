@@ -1,12 +1,14 @@
 package club.eridani.cursa.module.modules.client;
 
 import club.eridani.cursa.client.ConfigManager;
+import club.eridani.cursa.common.annotations.Module;
+import club.eridani.cursa.common.annotations.ParallelLoadable;
 import club.eridani.cursa.gui.CursaClickGUI;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
-import club.eridani.cursa.module.Module;
 import org.lwjgl.input.Keyboard;
 
+@ParallelLoadable
 @Module(name = "ClickGUI", category = Category.CLIENT, keyCode = Keyboard.KEY_O)
 public class ClickGUI extends ModuleBase {
 

@@ -1,5 +1,6 @@
 package club.eridani.cursa.command;
 
+import club.eridani.cursa.common.annotations.Command;
 import net.minecraft.client.Minecraft;
 
 public abstract class CommandBase {

@@ -1,5 +1,5 @@
 {
-  "required": true,
+  "required": false,
   "compatibilityLevel": "JAVA_8",
   "package": "club.eridani.cursa.mixin.mixins",
   "refmap": "mixins.cursa.refmap.json",

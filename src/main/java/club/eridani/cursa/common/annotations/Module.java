@@ -1,5 +1,6 @@
-package club.eridani.cursa.module;
+package club.eridani.cursa.common.annotations;
 
+import club.eridani.cursa.module.Category;
 import org.lwjgl.input.Keyboard;
 
 import java.lang.annotation.Retention;

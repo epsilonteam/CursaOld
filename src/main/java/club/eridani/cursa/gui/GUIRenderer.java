@@ -12,6 +12,7 @@ import java.util.ArrayList;
 public class GUIRenderer {
 
     public ArrayList<Panel> panels = new ArrayList<>();
+    public static GUIRenderer instance = new GUIRenderer();
 
     public GUIRenderer() {
         int startX = 5;

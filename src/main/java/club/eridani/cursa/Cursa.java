@@ -6,7 +6,7 @@ import club.eridani.cursa.event.events.client.InitializationEvent;
 import club.eridani.cursa.event.system.EventManager;
 import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.event.system.impl.annotated.AnnotatedEventManager;
-import club.eridani.cursa.tasks.ConfigOperateTask;
+import club.eridani.cursa.tasks.Tasks;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.Display;
@@ -39,16 +39,23 @@ public class Cursa {
     public void initialize(InitializationEvent.Initialize event) {
         Display.setTitle(MOD_NAME + " " + MOD_VERSION);
         FontManager.init();
+        log.info("Loading Module Manager");
         ModuleManager.init();
-        GUIManager.init();
-        CommandManager.init();
-        FriendManager.init();
+        launch(()->{
+            log.info("Loading GUI Manager");
+            GUIManager.init();
+            log.info("Loading Command Manager");
+            CommandManager.init();
+            log.info("Loading Friend Manager");
+            FriendManager.init();
+            log.info("Loading Config Manager");
+            ConfigManager.init();
+        });
     }
 
     @Listener
     public void postInitialize(InitializationEvent.PostInitialize event) {
-        ConfigManager.init();
-        launch(new ConfigOperateTask(ConfigOperateTask.Operation.Load));
+        launch(Tasks.LoadConfig);
     }
 
     public static EventManager EVENT_BUS = new AnnotatedEventManager();

@@ -81,8 +81,11 @@ public class TaskRunnable<T> extends TaskUnit implements Runnable {
 
     @Override
     public void run() {
-        if (eventTask != null) eventTask.invoke(eventParameter);
-        else if (task != null) task.invoke(parameters);
+        try {
+            if (eventTask != null) eventTask.invoke(eventParameter);
+            else if (task != null) task.invoke(parameters);
+        } catch (Exception ignore){
+        }
         if (syncer != null) syncer.countDown();
     }
 

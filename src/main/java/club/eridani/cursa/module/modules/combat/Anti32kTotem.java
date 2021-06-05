@@ -1,8 +1,11 @@
 package club.eridani.cursa.module.modules.combat;
 
+import club.eridani.cursa.common.annotations.Module;
+import club.eridani.cursa.common.annotations.ParallelLoadable;
+import club.eridani.cursa.common.annotations.ParallelRunnable;
+import club.eridani.cursa.common.types.Tick;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
-import club.eridani.cursa.module.Module;
 import club.eridani.cursa.setting.Setting;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.init.Items;
@@ -11,12 +14,13 @@ import net.minecraft.inventory.ClickType;
 /**
  * Created by B_312 on 06/24/19
  */
+@ParallelLoadable
 @Module(name = "Anti32KTotem",category = Category.COMBAT)
 public class Anti32kTotem extends ModuleBase {
 
     Setting<Boolean> pauseInInventory = setting("PauseInInventory",false);
 
-    @Override
+    @ParallelRunnable(type = Tick.Loop)
     public void onParallelTick() {
 		
         if (mc.currentScreen != null) {

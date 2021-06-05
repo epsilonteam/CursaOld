@@ -1,8 +1,8 @@
 package club.eridani.cursa.module;
 
 import club.eridani.cursa.Cursa;
+import club.eridani.cursa.common.annotations.Module;
 import club.eridani.cursa.event.events.client.InputUpdateEvent;
-import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.event.events.render.RenderOverlayEvent;
 import club.eridani.cursa.event.events.render.RenderWorldEvent;
 import club.eridani.cursa.setting.Setting;
@@ -44,6 +44,17 @@ public class ModuleBase {
         else enable();
     }
 
+    public void disableAndEnable() {
+        if (enabled) {
+            enabled = false;
+            Cursa.MODULE_BUS.unregister(this);
+            onDisable();
+            enabled = true;
+            Cursa.MODULE_BUS.register(this);
+            onEnable();
+        }
+    }
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -70,34 +81,16 @@ public class ModuleBase {
     public void onDisable() {
     }
 
-    public void onTick() {
-    }
-
-    public void onRenderTick() {
-    }
-
     public void onRender(RenderOverlayEvent event) {
     }
 
     public void onRenderWorld(RenderWorldEvent event) {
     }
 
-    public void onInputUpdate(InputUpdateEvent event){
-    }
-
-    public void onPacketSend(PacketEvent.Send event) {
-    }
-
-    public void onPacketReceive(PacketEvent.Receive event) {
+    public void onInputUpdate(InputUpdateEvent event) {
     }
 
     public void onSettingChange(Setting<?> setting) {
-    }
-
-    public void onParallelTick(){
-    }
-
-    public void onParallelRenderTick(){
     }
 
     public Setting<Boolean> setting(String name, boolean defaultValue) {

@@ -1,8 +1,11 @@
 package club.eridani.cursa.module.modules.player;
 
+import club.eridani.cursa.common.annotations.Module;
+import club.eridani.cursa.common.annotations.PacketListener;
+import club.eridani.cursa.common.annotations.ParallelLoadable;
+import club.eridani.cursa.common.types.IO;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.module.Category;
-import club.eridani.cursa.module.Module;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
 import net.minecraft.block.BlockShulkerBox;
@@ -11,6 +14,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.network.play.client.CPacketPlayerTryUseItemOnBlock;
 import net.minecraft.util.math.BlockPos;
 
+@ParallelLoadable
 @Module(name = "AntiContainer", category = Category.PLAYER)
 public class AntiContainer extends ModuleBase {
 
@@ -27,12 +31,10 @@ public class AntiContainer extends ModuleBase {
     Setting<Boolean> Brewing_Stand = setting("Brewing_Stand", true);
     Setting<Boolean> ShulkerBox = setting("ShulkerBox", true);
 
-    @Override
+    @PacketListener(channel = IO.Send, target = CPacketPlayerTryUseItemOnBlock.class)
     public void onPacketSend(PacketEvent.Send packet) {
-        if (packet.packet instanceof CPacketPlayerTryUseItemOnBlock) {
-            BlockPos pos = ((CPacketPlayerTryUseItemOnBlock) packet.packet).getPos();
-            if (check(pos)) packet.cancel();
-        }
+        BlockPos pos = ((CPacketPlayerTryUseItemOnBlock) packet.packet).getPos();
+        if (check(pos)) packet.cancel();
     }
 
     public boolean check(BlockPos pos) {

@@ -3,14 +3,16 @@ package club.eridani.cursa.module.modules.combat;
 import club.eridani.cursa.client.FontManager;
 import club.eridani.cursa.client.FriendManager;
 import club.eridani.cursa.client.GUIManager;
+import club.eridani.cursa.common.annotations.*;
+import club.eridani.cursa.common.types.IO;
+import club.eridani.cursa.common.types.Tick;
 import club.eridani.cursa.concurrent.repeat.RepeatUnit;
-import club.eridani.cursa.concurrent.utils.Syncer;
+import club.eridani.cursa.concurrent.task.VoidTask;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.event.events.render.RenderModelEvent;
 import club.eridani.cursa.event.events.render.RenderWorldEvent;
 import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.module.Category;
-import club.eridani.cursa.module.Module;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
 import club.eridani.cursa.utils.*;
@@ -42,16 +44,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static club.eridani.cursa.concurrent.TaskManager.launch;
 import static club.eridani.cursa.concurrent.TaskManager.runRepeat;
 import static club.eridani.cursa.utils.CrystalUtil.*;
-import static club.eridani.cursa.utils.MathUtil.clamp;
 import static org.lwjgl.opengl.GL11.GL_QUADS;
 
 /**
  * Created by B_312 on 01/15/21
- * Updated by B_312 on 05/23/21
+ * Updated by B_312 on 06/06/21
  */
+@ParallelLoadable
 @Module(name = "CursaAura", category = Category.COMBAT)
 public class CursaAura extends ModuleBase {
 
@@ -59,6 +60,8 @@ public class CursaAura extends ModuleBase {
 
     //General
     Setting<Boolean> autoSwitch = setting("AutoSwitch", false).whenAtMode(page, "General");
+    Setting<String> updateMode = setting("Update", "Thread", "Tick", "Render", "Parallel", "Fast", "Thread").whenAtMode(page, "General");
+    Setting<Integer> threadDelay = setting("ThreadDelay", 10, 1, 50).whenAtMode(page, "General").whenAtMode(updateMode, "Thread");
     Setting<Boolean> targetPlayer = setting("Players", true).whenAtMode(page, "General");
     Setting<Boolean> targetMob = setting("Mobs", false).whenAtMode(page, "General");
     Setting<Boolean> targetAnimal = setting("Animals", false).whenAtMode(page, "General");
@@ -90,7 +93,7 @@ public class CursaAura extends ModuleBase {
     Setting<Boolean> clientSide = setting("ClientSideConfirm", false).whenAtMode(page, "Calculation");
     //Render
     Setting<Boolean> renderDmg = setting("RenderDamage", false).whenAtMode(page, "Render");
-    Setting<String> renderMode = setting("RenderBlock", "Solid", listOf("Solid", "Up", "UpLine", "Full", "Outline", "NoRender")).whenAtMode(page, "Render");
+    Setting<String> renderMode = setting("RenderBlock", "Solid", listOf("Solid", "Up", "UpLine", "Full", "Outline", "OFF")).whenAtMode(page, "Render");
     Setting<Boolean> syncGUI = setting("SyncGui", false).whenAtMode(page, "Render");
     Setting<Integer> red = setting("Red", 255, 0, 255).whenAtMode(page, "Render").whenFalse(syncGUI);
     Setting<Integer> green = setting("Green", 0, 0, 255).whenAtMode(page, "Render").whenFalse(syncGUI);
@@ -117,29 +120,26 @@ public class CursaAura extends ModuleBase {
     Timer breakTimer = new Timer();
     private final HashMap<BlockPos, Double> renderBlockDmg = new HashMap<>();
 
-    RepeatUnit calculation = new RepeatUnit(() -> clamp(Math.min((int) ((1000 / placeSpeed.getValue()) - 5), (int) ((1000 / attackSpeed.getValue()) - 5)), 1, Integer.MAX_VALUE), () -> {
-        Syncer syncer = new Syncer(2);
-        launch(syncer, () -> {
-            if (mc.player == null || mc.world == null) return;
-            List<Entity> entities = new ArrayList<>(mc.world.loadedEntityList);
-            CursaAura.attackCrystalTarget = entities.stream()
-                    .filter(e -> e instanceof EntityEnderCrystal && canHitCrystal(e.getPositionVector()))
-                    .map(e -> (EntityEnderCrystal) e)
-                    .min(Comparator.comparing(e -> mc.player.getDistance(e))).orElse(null);
-        });
-        launch(syncer, () -> {
-            if (mc.player == null || mc.world == null) return;
-            if (multiPlace.getValue()) {
-                CursaAura.placeTarget = Calculator();
-            }
-        });
-        syncer.await();
+    RepeatUnit placeCalculation = new RepeatUnit(() -> (int) ((1000 / placeSpeed.getValue()) - 5), () -> {
+        if (mc.player == null || mc.world == null) return;
+        if (multiPlace.getValue() || !updateMode.getValue().equals("Thread")) {
+            CursaAura.placeTarget = Calculator();
+        }
+    });
+
+    RepeatUnit breakCalculation = new RepeatUnit(() -> (int) ((1000 / attackSpeed.getValue()) - 5), () -> {
+        if (mc.player == null || mc.world == null) return;
+        CursaAura.attackCrystalTarget = new ArrayList<>(mc.world.loadedEntityList).stream()
+                .filter(e -> e instanceof EntityEnderCrystal && canHitCrystal(e.getPositionVector()))
+                .map(e -> (EntityEnderCrystal) e)
+                .min(Comparator.comparing(e -> mc.player.getDistance(e))).orElse(null);
     });
 
     List<RepeatUnit> repeatUnits = new ArrayList<>();
 
     public CursaAura() {
-        repeatUnits.add(calculation);
+        repeatUnits.add(placeCalculation);
+        repeatUnits.add(breakCalculation);
         repeatUnits.add(updateAutoCrystal);
 
         //Register repeat units
@@ -149,22 +149,20 @@ public class CursaAura extends ModuleBase {
         });
     }
 
-    @Override
+    @PacketListener(channel = IO.Receive, target = SPacketSoundEffect.class)
     public void onPacketReceive(PacketEvent.Receive event) {
-        if (mc.player == null) return;
+        if (mc.player == null || mc.world == null) return;
         //Clear click delay
         if (mc.player.getHeldItemMainhand().getItem() == Items.END_CRYSTAL || mc.player.getHeldItemOffhand().getItem() == Items.END_CRYSTAL) {
             mc.rightClickDelayTimer = 0;
         }
         //Sounds confirm makes us update world entity faster
-        if (event.packet instanceof SPacketSoundEffect) {
-            final SPacketSoundEffect packet = (SPacketSoundEffect) event.packet;
-            if (packet.getCategory() == SoundCategory.BLOCKS && packet.getSound() == SoundEvents.ENTITY_GENERIC_EXPLODE) {
-                mc.world.loadedEntityList.stream()
-                        .filter(it -> it instanceof EntityEnderCrystal)
-                        .filter(it -> it.getDistance(packet.getX(), packet.getY(), packet.getZ()) <= 6.0f)
-                        .forEach(Entity::setDead);
-            }
+        SPacketSoundEffect packet = (SPacketSoundEffect) event.packet;
+        if (packet.getCategory() == SoundCategory.BLOCKS && packet.getSound() == SoundEvents.ENTITY_GENERIC_EXPLODE) {
+            new ArrayList<>(mc.world.loadedEntityList).stream()
+                    .filter(it -> it instanceof EntityEnderCrystal)
+                    .filter(it -> it.getDistance(packet.getX(), packet.getY(), packet.getZ()) <= 6.0f)
+                    .forEach(Entity::setDead);
         }
     }
 
@@ -178,20 +176,18 @@ public class CursaAura extends ModuleBase {
         }
     }
 
-    @Override
+    @PacketListener(channel = IO.Send, target = CPacketPlayer.class)
     public void onPacketSend(PacketEvent.Send event) {
         if (mc.player == null) return;
         if (!rotate.getValue()) {
             return;
         }
         //Spoof rotation packets
-        if (event.packet instanceof CPacketPlayer) {
-            CPacketPlayer packet = (CPacketPlayer) event.packet;
-            if (shouldSpoofPacket) {
-                packet.yaw = yaw;
-                packet.pitch = pitch;
-                shouldSpoofPacket = false;
-            }
+        CPacketPlayer packet = (CPacketPlayer) event.packet;
+        if (shouldSpoofPacket) {
+            packet.yaw = yaw;
+            packet.pitch = pitch;
+            shouldSpoofPacket = false;
         }
     }
 
@@ -291,7 +287,7 @@ public class CursaAura extends ModuleBase {
 
     private void drawBlock(BlockPos blockPos, int color) {
         CursaTessellator.prepare(GL_QUADS);
-        if (!renderMode.getValue().equals("NoRender")) {
+        if (!renderMode.getValue().equals("OFF")) {
             if (renderMode.getValue().equals("Solid") || renderMode.getValue().equals("Up")) {
                 if (renderMode.getValue().equals("Up")) {
                     CursaTessellator.drawBox(blockPos, color, GeometryMasks.Quad.UP);
@@ -382,7 +378,7 @@ public class CursaAura extends ModuleBase {
 
     volatile boolean shouldIgnoreEntity = false;
 
-    RepeatUnit updateAutoCrystal = new RepeatUnit(10, () -> {
+    VoidTask updateTask = () -> {
         if (mc.player == null || mc.world == null) return;
 
         if (placeTimer.passed(1050) || breakTimer.passed(1050)) rotating = false;
@@ -463,7 +459,31 @@ public class CursaAura extends ModuleBase {
             mc.player.inventory.currentItem = prevSlot;
             mc.playerController.updateController();
         }
+    };
+
+    RepeatUnit updateAutoCrystal = new RepeatUnit(() -> threadDelay.getValue(), () -> {
+        if (updateMode.getValue().equals("Thread")) updateTask.invoke();
     });
+
+    @TickUpdate(type = Tick.Client)
+    public void onTick() {
+        if (updateMode.getValue().equals("Tick")) updateTask.invoke();
+    }
+
+    @TickUpdate(type = Tick.Render)
+    public void onRenderTick() {
+        if (updateMode.getValue().equals("Render")) updateTask.invoke();
+    }
+
+    @ParallelRunnable(type = Tick.Client)
+    public void onParallelTick() {
+        if (updateMode.getValue().equals("Parallel")) updateTask.invoke();
+    }
+
+    @ParallelRunnable(type = Tick.Render)
+    public void onParallelRenderTick() {
+        if (updateMode.getValue().equals("Fast")) updateTask.invoke();
+    }
 
     /**
      * Calculation of target block to place crystal
@@ -582,8 +602,8 @@ public class CursaAura extends ModuleBase {
         repeatUnits.forEach(RepeatUnit::suspend);
         rotating = false;
         resetRotation();
-        placeTimer.reset();
-        breakTimer.reset();
+        placeTimer.restart();
+        breakTimer.restart();
         renderBlock = null;
         target = null;
         yaw = mc.player.rotationYaw;

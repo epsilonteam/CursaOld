@@ -13,6 +13,10 @@ public class Syncer {
         latch = new CountDownLatch(size);
     }
 
+    public Syncer(){
+        latch = new CountDownLatch(1);
+    }
+
     public CountDownLatch getLatch(){
         return latch;
     }

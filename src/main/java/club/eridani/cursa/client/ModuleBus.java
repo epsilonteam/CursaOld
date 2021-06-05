@@ -1,20 +1,22 @@
 package club.eridani.cursa.client;
 
 import club.eridani.cursa.Cursa;
+import club.eridani.cursa.common.types.Packets;
+import club.eridani.cursa.common.types.Tick;
+import club.eridani.cursa.concurrent.task.VoidTask;
 import club.eridani.cursa.concurrent.utils.Syncer;
-import club.eridani.cursa.event.events.client.InputUpdateEvent;
-import club.eridani.cursa.event.events.client.SettingUpdateEvent;
-import club.eridani.cursa.event.events.client.TickEvent;
+import club.eridani.cursa.event.events.client.*;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.event.events.render.RenderOverlayEvent;
 import club.eridani.cursa.event.events.render.RenderWorldEvent;
 import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.module.ModuleBase;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static club.eridani.cursa.concurrent.TaskManager.launch;
+import static club.eridani.cursa.concurrent.TaskManager.*;
 
 public class ModuleBus {
 
@@ -49,20 +51,44 @@ public class ModuleBus {
 
     @Listener
     public void onTick(TickEvent event) {
-        modules.forEach(ModuleBase::onTick);
-        Syncer syncer;
-        syncer = new Syncer(modules.size());
-        modules.forEach(it -> launch(syncer, it::onParallelTick));
+        List<VoidTask> enabledTasks = new ArrayList<>();
+        Syncer syncer = new Syncer();
+        launch(syncer, () -> ModuleManager.getInstance().parallelTasks.forEach((module, pair) -> {
+            if (module.isEnabled() && pair.a.equals(Tick.Client)) enabledTasks.add(pair.b);
+        }));
+        ModuleManager.getInstance().tickUpdateTasks.forEach((module, pair) -> {
+            if (module.isEnabled() && pair.a.equals(Tick.Client)) pair.b.invoke();
+        });
         syncer.await();
+        runBlocking(enabledTasks);
     }
 
     @Listener
     public void onRenderTick(RenderOverlayEvent event) {
-        modules.forEach(ModuleBase::onRenderTick);
-        Syncer syncer;
-        syncer = new Syncer(modules.size());
-        modules.forEach(it -> launch(syncer, it::onParallelRenderTick));
+        List<VoidTask> enabledTasks = new ArrayList<>();
+        Syncer syncer = new Syncer();
+        launch(syncer, () -> ModuleManager.getInstance().parallelTasks.forEach((module, pair) -> {
+            if (module.isEnabled() && pair.a.equals(Tick.Render)) enabledTasks.add(pair.b);
+        }));
+        ModuleManager.getInstance().tickUpdateTasks.forEach((module, pair) -> {
+            if (module.isEnabled() && pair.a.equals(Tick.Render)) pair.b.invoke();
+        });
         syncer.await();
+        runBlocking(enabledTasks);
+    }
+
+    @Listener
+    public void onGameLoop(GameLoopEvent event) {
+        List<VoidTask> enabledTasks = new ArrayList<>();
+        Syncer syncer = new Syncer();
+        launch(syncer, () -> ModuleManager.getInstance().parallelTasks.forEach((module, pair) -> {
+            if (module.isEnabled() && pair.a.equals(Tick.Loop)) enabledTasks.add(pair.b);
+        }));
+        ModuleManager.getInstance().tickUpdateTasks.forEach((module, pair) -> {
+            if (module.isEnabled() && pair.a.equals(Tick.Loop)) pair.b.invoke();
+        });
+        syncer.await();
+        runBlocking(enabledTasks);
     }
 
     @Listener
@@ -72,17 +98,35 @@ public class ModuleBus {
 
     @Listener
     public void onRenderWorld(RenderWorldEvent event) {
+        List<VoidTask> enabledTasks = new ArrayList<>();
+        Syncer syncer = new Syncer();
+        launch(syncer, () -> ModuleManager.getInstance().parallelTasks.forEach((module, pair) -> {
+            if (module.isEnabled() && pair.a.equals(Tick.RenderWorld)) enabledTasks.add(pair.b);
+        }));
+        ModuleManager.getInstance().tickUpdateTasks.forEach((module, pair) -> {
+            if (module.isEnabled() && pair.a.equals(Tick.RenderWorld)) pair.b.invoke();
+        });
         modules.forEach(it -> it.onRenderWorld(event));
+        syncer.await();
+        runBlocking(enabledTasks);
     }
 
     @Listener
     public void onPacketSend(PacketEvent.Send event) {
-        modules.forEach(it -> it.onPacketSend(event));
+        ModuleManager.getInstance().packetSendListeners.forEach((module, pair) -> {
+            if (module.isEnabled() && (event.packet.getClass().equals(pair.b) || pair.b.equals(Packets.class))) {
+                pair.a.invoke(event);
+            }
+        });
     }
 
     @Listener
     public void onPacketReceive(PacketEvent.Receive event) {
-        modules.forEach(it -> it.onPacketReceive(event));
+        ModuleManager.getInstance().packetReceiveListeners.forEach((module, pair) -> {
+            if (module.isEnabled() && (event.packet.getClass().equals(pair.b) || pair.b.equals(Packets.class))) {
+                pair.a.invoke(event);
+            }
+        });
     }
 
     @Listener

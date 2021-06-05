@@ -11,8 +11,7 @@ public final class Timer {
 
     private long time;
 
-    public Timer()
-    {
+    public Timer() {
         time = -1;
     }
 
@@ -36,6 +35,11 @@ public final class Timer {
         return ((System.currentTimeMillis() - this.time) >= minutes * 1000 * 60);
     }
 
+    public long getPassed() {
+        return (System.currentTimeMillis() - this.time);
+    }
+
+
     public static long getSecondsPassed(Instant start, Instant current) {
         return Duration.between(start, current).getSeconds();
     }
@@ -57,6 +61,11 @@ public final class Timer {
         return this;
     }
 
+    public Timer restart() {
+        this.time = -1;
+        return this;
+    }
+
     public long getTime() {
         return this.time;
     }
@@ -65,7 +74,7 @@ public final class Timer {
         this.time = time;
     }
 
-    public long hasPassed(){
+    public long hasPassed() {
         return System.currentTimeMillis() - time;
     }
 

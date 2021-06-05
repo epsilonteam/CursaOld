@@ -1,8 +1,11 @@
 package club.eridani.cursa.module.modules.movement;
 
+import club.eridani.cursa.common.annotations.Module;
+import club.eridani.cursa.common.annotations.PacketListener;
+import club.eridani.cursa.common.annotations.ParallelLoadable;
+import club.eridani.cursa.common.types.IO;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.module.Category;
-import club.eridani.cursa.module.Module;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
 import net.minecraft.client.Minecraft;
@@ -12,6 +15,7 @@ import net.minecraft.network.play.server.SPacketEntityStatus;
 import net.minecraft.network.play.server.SPacketEntityVelocity;
 import net.minecraft.network.play.server.SPacketExplosion;
 
+@ParallelLoadable
 @Module(name = "Velocity",category = Category.MOVEMENT)
 public class Velocity extends ModuleBase {
 
@@ -22,7 +26,7 @@ public class Velocity extends ModuleBase {
 
     public final Minecraft mc = Minecraft.getMinecraft();
 
-    @Override
+    @PacketListener(channel = IO.Receive)
     public void onPacketReceive(PacketEvent.Receive event) {
         if(mc.player == null) return;
         if (event.packet instanceof SPacketEntityStatus && this.bobbers.getValue()) {

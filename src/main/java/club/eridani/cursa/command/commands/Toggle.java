@@ -1,8 +1,8 @@
 package club.eridani.cursa.command.commands;
 
 import club.eridani.cursa.client.ModuleManager;
-import club.eridani.cursa.command.Command;
 import club.eridani.cursa.command.CommandBase;
+import club.eridani.cursa.common.annotations.Command;
 import club.eridani.cursa.utils.ChatUtil;
 
 import java.util.Objects;
