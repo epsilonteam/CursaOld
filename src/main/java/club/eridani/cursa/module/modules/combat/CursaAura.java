@@ -7,11 +7,12 @@ import club.eridani.cursa.common.annotations.Module;
 import club.eridani.cursa.common.annotations.ParallelLoadable;
 import club.eridani.cursa.concurrent.repeat.RepeatUnit;
 import club.eridani.cursa.event.events.network.PacketEvent;
+import club.eridani.cursa.event.events.render.RenderEvent;
 import club.eridani.cursa.event.events.render.RenderModelEvent;
-import club.eridani.cursa.event.events.render.RenderWorldEvent;
 import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
+import club.eridani.cursa.notification.NotificationManager;
 import club.eridani.cursa.setting.Setting;
 import club.eridani.cursa.utils.*;
 import club.eridani.cursa.utils.math.Pair;
@@ -110,7 +111,7 @@ public strictfp class CursaAura extends ModuleBase {
     Setting<Boolean> clientSide = setting("ClientSideConfirm", false).whenAtMode(page, "Calculation");
     //Render
     Setting<Boolean> renderDmg = setting("RenderDamage", false).whenAtMode(page, "Render");
-    Setting<String> renderMode = setting("RenderBlock", "Solid", listOf("Solid", "Up", "UpLine", "Full", "Outline", "OFF")).whenAtMode(page, "Render");
+    Setting<String> renderMode = setting("RenderBlock", "Full", listOf("Solid", "Up", "UpLine", "Full", "Outline", "OFF")).whenAtMode(page, "Render");
     Setting<Boolean> syncGUI = setting("SyncGui", false).whenAtMode(page, "Render");
     Setting<Integer> red = setting("Red", 255, 0, 255).whenAtMode(page, "Render").whenFalse(syncGUI);
     Setting<Integer> green = setting("Green", 0, 0, 255).whenAtMode(page, "Render").whenFalse(syncGUI);
@@ -147,7 +148,7 @@ public strictfp class CursaAura extends ModuleBase {
         if (mc.player == null || mc.world == null) return;
         if (multiPlace.getValue()) localTarget.putPlaceTarget(calculator(shouldIgnoreEntity.get()));
     }).timeOut(it -> {
-        ChatUtil.printErrorChatMessage("Can't keep up!You should");
+        NotificationManager.error("Can't keep up!The calculation can't catch up with your place speed!");
     });
 
     RepeatUnit breakCalculation = new RepeatUnit(() -> (int) ((1000 / attackSpeed.getValue()) - 5), () -> {
@@ -582,9 +583,9 @@ public strictfp class CursaAura extends ModuleBase {
         List<Entity> entities = new ArrayList<>(mc.world.loadedEntityList);
         entities = entities.stream()
                 .filter(entity -> EntityUtil.isLiving(entity) && (EntityUtil.isPassive(entity) ? targetAnimal.getValue() : targetMob.getValue()))
-                .filter(entity -> targetPlayer.getValue() || !(entity instanceof EntityPlayer))
                 .filter(entity -> mc.player.getDistance(entity) < distance.getValue())
                 .collect(Collectors.toList());
+        if (targetPlayer.getValue()) entities.addAll(mc.world.playerEntities);
         entities.removeIf(entity -> entity == mc.player || FriendManager.isFriend(entity));
         entities.sort(Comparator.comparingDouble(entity -> entity.getDistance(mc.player)));
         return entities;
@@ -600,7 +601,7 @@ public strictfp class CursaAura extends ModuleBase {
 
 
     @Override
-    public void onRenderWorld(RenderWorldEvent event) {
+    public void onRenderWorld(RenderEvent event) {
         int color = syncGUI.getValue() ?
                 new Color(GUIManager.getRed(), GUIManager.getGreen(), GUIManager.getBlue(), transparency.getValue()).getRGB() :
                 getColor();

@@ -6,7 +6,6 @@ import club.eridani.cursa.concurrent.task.VoidTask;
 import club.eridani.cursa.event.events.client.KeyEvent;
 import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.module.ModuleBase;
-import club.eridani.cursa.module.modules.combat.CursaAura;
 import club.eridani.cursa.utils.ClassUtil;
 
 import java.util.*;
@@ -58,7 +57,6 @@ public class ModuleManager {
     }
 
     private void loadModules() {
-        moduleList.add(new CursaAura());
         Set<Class<? extends ModuleBase>> classList = ClassUtil.findClasses(Cursa.class.getPackage().getName(), ModuleBase.class);
         List<VoidTask> quickLoadList = new ArrayList<>();
         Cursa.log.info("[ModuleManager]Loading modules.");

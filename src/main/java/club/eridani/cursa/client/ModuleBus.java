@@ -26,7 +26,7 @@ public class ModuleBus {
         Cursa.EVENT_BUS.register(this);
     }
 
-    private final List<ModuleBase> modules = new CopyOnWriteArrayList<>();
+    final List<ModuleBase> modules = new CopyOnWriteArrayList<>();
 
     public void register(ModuleBase module) {
         modules.add(module);
@@ -109,14 +109,7 @@ public class ModuleBus {
 
     @Listener
     public void onRenderWorld(RenderWorldEvent event) {
-        modules.forEach(it -> {
-            try {
-                it.onRenderWorld(event);
-            } catch (Exception exception) {
-                NotificationManager.fatal("Error while running onRenderWorld!");
-                exception.printStackTrace();
-            }
-        });
+        WorldRenderPatcher.INSTANCE.patch(event);
     }
 
     @Listener

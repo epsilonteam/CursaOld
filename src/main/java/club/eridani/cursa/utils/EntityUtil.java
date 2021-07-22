@@ -9,10 +9,20 @@ import net.minecraft.entity.passive.EntityAmbientCreature;
 import net.minecraft.entity.passive.EntitySquid;
 import net.minecraft.entity.passive.EntityWolf;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.math.Vec3d;
 
 public class EntityUtil {
 
     public static Minecraft mc = Minecraft.getMinecraft();
+
+    public static Vec3d getInterpolatedAmount(Entity entity, double x, double y, double z) {
+        return new Vec3d((entity.posX - entity.lastTickPosX) * x, (entity.posY - entity.lastTickPosY) * y, (entity.posZ - entity.lastTickPosZ) * z);
+    }
+
+    public static Vec3d getInterpolatedAmount(Entity entity, double ticks) {
+        return EntityUtil.getInterpolatedAmount(entity, ticks, ticks, ticks);
+    }
+
 
     public static boolean isFakeLocalPlayer(Entity entity) {
         return entity != null && entity.getEntityId() == -100 && mc.player != entity;

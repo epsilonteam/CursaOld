@@ -4,7 +4,7 @@ import club.eridani.cursa.client.FriendManager;
 import club.eridani.cursa.client.GUIManager;
 import club.eridani.cursa.common.annotations.Module;
 import club.eridani.cursa.event.events.network.PacketEvent;
-import club.eridani.cursa.event.events.render.RenderWorldEvent;
+import club.eridani.cursa.event.events.render.RenderEvent;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
@@ -104,7 +104,7 @@ public class AutoCrystal extends ModuleBase {
     }
 
     @Override
-    public void onRenderWorld(RenderWorldEvent event) {
+    public void onRenderWorld(RenderEvent event) {
         int color = new Color(GUIManager.getRed(), GUIManager.getGreen(), GUIManager.getBlue(), 60).getRGB();
         if (renderPlace.getValue() && renderBlock != null) {
             CursaTessellator.prepare(GL_QUADS);
