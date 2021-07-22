@@ -9,6 +9,7 @@ import club.eridani.cursa.setting.NumberSetting;
 import club.eridani.cursa.setting.Setting;
 import club.eridani.cursa.setting.settings.*;
 import club.eridani.cursa.utils.SoundUtil;
+import club.eridani.cursa.utils.Timer;
 import net.minecraft.client.gui.Gui;
 
 import java.awt.*;
@@ -19,6 +20,7 @@ public class ModuleButton extends club.eridani.cursa.gui.Component {
 
     public List<club.eridani.cursa.gui.Component> settings = new ArrayList<>();
     ModuleBase module;
+    public Timer buttonTimer = new Timer();
 
     public ModuleButton(ModuleBase module, int width, int height, Panel father) {
         this.module = module;
@@ -61,6 +63,7 @@ public class ModuleButton extends club.eridani.cursa.gui.Component {
             module.toggle();
             SoundUtil.playButtonClick();
         } else if (mouseButton == 1) {
+            buttonTimer.reset();
             isExtended = !isExtended;
             SoundUtil.playButtonClick();
         }

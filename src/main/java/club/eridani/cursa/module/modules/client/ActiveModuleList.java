@@ -6,7 +6,6 @@ import club.eridani.cursa.client.GUIManager;
 import club.eridani.cursa.common.annotations.Module;
 import club.eridani.cursa.common.annotations.ParallelLoadable;
 import club.eridani.cursa.event.events.render.RenderOverlayEvent;
-import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
@@ -23,7 +22,7 @@ public class ActiveModuleList extends ModuleBase {
 
     Setting<String> listPos = setting("ListPos", "RightTop", listOf("RightTop", "RightDown", "LeftTop", "LeftDown"));
 
-    @Listener
+    @Override
     public void onRender(RenderOverlayEvent event) {
 
         int startX = RenderHelper.getStart(event.getScaledResolution(),listPos.getValue()).x;

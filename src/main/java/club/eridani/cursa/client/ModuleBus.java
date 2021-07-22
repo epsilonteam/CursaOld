@@ -1,22 +1,24 @@
 package club.eridani.cursa.client;
 
 import club.eridani.cursa.Cursa;
-import club.eridani.cursa.common.types.Packets;
-import club.eridani.cursa.common.types.Tick;
 import club.eridani.cursa.concurrent.task.VoidTask;
 import club.eridani.cursa.concurrent.utils.Syncer;
-import club.eridani.cursa.event.events.client.*;
+import club.eridani.cursa.event.events.client.InputUpdateEvent;
+import club.eridani.cursa.event.events.client.SettingUpdateEvent;
+import club.eridani.cursa.event.events.client.TickEvent;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.event.events.render.RenderOverlayEvent;
 import club.eridani.cursa.event.events.render.RenderWorldEvent;
 import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.module.ModuleBase;
+import club.eridani.cursa.notification.NotificationManager;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static club.eridani.cursa.concurrent.TaskManager.*;
+import static club.eridani.cursa.concurrent.TaskManager.launch;
+import static club.eridani.cursa.concurrent.TaskManager.runBlocking;
 
 public class ModuleBus {
 
@@ -53,11 +55,21 @@ public class ModuleBus {
     public void onTick(TickEvent event) {
         List<VoidTask> enabledTasks = new ArrayList<>();
         Syncer syncer = new Syncer();
-        launch(syncer, () -> ModuleManager.getInstance().parallelTasks.forEach((module, pair) -> {
-            if (module.isEnabled() && pair.a.equals(Tick.Client)) enabledTasks.add(pair.b);
-        }));
-        ModuleManager.getInstance().tickUpdateTasks.forEach((module, pair) -> {
-            if (module.isEnabled() && pair.a.equals(Tick.Client)) pair.b.invoke();
+        launch(syncer, () -> modules.forEach(it -> enabledTasks.add(() -> {
+            try {
+                it.onParallelTick();
+            } catch (Exception exception) {
+                NotificationManager.fatal("Error while running Parallel Tick!");
+                exception.printStackTrace();
+            }
+        })));
+        modules.forEach(it -> {
+            try {
+                it.onTick();
+            } catch (Exception exception) {
+                NotificationManager.fatal("Error while running Tick!");
+                exception.printStackTrace();
+            }
         });
         syncer.await();
         runBlocking(enabledTasks);
@@ -67,71 +79,80 @@ public class ModuleBus {
     public void onRenderTick(RenderOverlayEvent event) {
         List<VoidTask> enabledTasks = new ArrayList<>();
         Syncer syncer = new Syncer();
-        launch(syncer, () -> ModuleManager.getInstance().parallelTasks.forEach((module, pair) -> {
-            if (module.isEnabled() && pair.a.equals(Tick.Render)) enabledTasks.add(pair.b);
-        }));
-        ModuleManager.getInstance().tickUpdateTasks.forEach((module, pair) -> {
-            if (module.isEnabled() && pair.a.equals(Tick.Render)) pair.b.invoke();
+        launch(syncer, () -> modules.forEach(it -> enabledTasks.add(() -> {
+            try {
+                it.onParallelRenderTick();
+            } catch (Exception exception) {
+                NotificationManager.fatal("Error while running RenderTick!");
+                exception.printStackTrace();
+            }
+        })));
+        modules.forEach(it -> {
+            try {
+                it.onRenderTick();
+            } catch (Exception exception) {
+                NotificationManager.fatal("Error while running Parallel RenderTick!");
+                exception.printStackTrace();
+            }
         });
         syncer.await();
         runBlocking(enabledTasks);
-    }
-
-    @Listener
-    public void onGameLoop(GameLoopEvent event) {
-        List<VoidTask> enabledTasks = new ArrayList<>();
-        Syncer syncer = new Syncer();
-        launch(syncer, () -> ModuleManager.getInstance().parallelTasks.forEach((module, pair) -> {
-            if (module.isEnabled() && pair.a.equals(Tick.Loop)) enabledTasks.add(pair.b);
-        }));
-        ModuleManager.getInstance().tickUpdateTasks.forEach((module, pair) -> {
-            if (module.isEnabled() && pair.a.equals(Tick.Loop)) pair.b.invoke();
+        modules.forEach(it -> {
+            try {
+                it.onRender(event);
+            } catch (Exception exception) {
+                NotificationManager.fatal("Error while running onRender!");
+                exception.printStackTrace();
+            }
         });
-        syncer.await();
-        runBlocking(enabledTasks);
-    }
-
-    @Listener
-    public void onRender(RenderOverlayEvent event) {
-        modules.forEach(it -> it.onRender(event));
     }
 
     @Listener
     public void onRenderWorld(RenderWorldEvent event) {
-        List<VoidTask> enabledTasks = new ArrayList<>();
-        Syncer syncer = new Syncer();
-        launch(syncer, () -> ModuleManager.getInstance().parallelTasks.forEach((module, pair) -> {
-            if (module.isEnabled() && pair.a.equals(Tick.RenderWorld)) enabledTasks.add(pair.b);
-        }));
-        ModuleManager.getInstance().tickUpdateTasks.forEach((module, pair) -> {
-            if (module.isEnabled() && pair.a.equals(Tick.RenderWorld)) pair.b.invoke();
+        modules.forEach(it -> {
+            try {
+                it.onRenderWorld(event);
+            } catch (Exception exception) {
+                NotificationManager.fatal("Error while running onRenderWorld!");
+                exception.printStackTrace();
+            }
         });
-        modules.forEach(it -> it.onRenderWorld(event));
-        syncer.await();
-        runBlocking(enabledTasks);
     }
 
     @Listener
     public void onPacketSend(PacketEvent.Send event) {
-        ModuleManager.getInstance().packetSendListeners.forEach((module, pair) -> {
-            if (module.isEnabled() && (event.packet.getClass().equals(pair.b) || pair.b.equals(Packets.class))) {
-                pair.a.invoke(event);
+        modules.forEach(it -> {
+            try {
+                it.onPacketSend(event);
+            } catch (Exception exception) {
+                NotificationManager.fatal("Error while running onPacketSend!");
+                exception.printStackTrace();
             }
         });
     }
 
     @Listener
     public void onPacketReceive(PacketEvent.Receive event) {
-        ModuleManager.getInstance().packetReceiveListeners.forEach((module, pair) -> {
-            if (module.isEnabled() && (event.packet.getClass().equals(pair.b) || pair.b.equals(Packets.class))) {
-                pair.a.invoke(event);
+        modules.forEach(it -> {
+            try {
+                it.onPacketReceive(event);
+            } catch (Exception exception) {
+                NotificationManager.fatal("Error while running onPacketReceive!");
+                exception.printStackTrace();
             }
         });
     }
 
     @Listener
     public void onSettingChange(SettingUpdateEvent event) {
-        modules.forEach(it -> it.onSettingChange(event.getSetting()));
+        modules.forEach(it -> {
+            try {
+                it.onSettingChange(event.getSetting());
+            } catch (Exception exception) {
+                NotificationManager.fatal("Error while running onSettingChange!");
+                exception.printStackTrace();
+            }
+        });
     }
 
 }

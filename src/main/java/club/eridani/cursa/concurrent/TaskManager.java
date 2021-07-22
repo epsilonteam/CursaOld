@@ -130,6 +130,12 @@ public class TaskManager {
         RepeatManager.instance.repeatUnits.remove(repeatUnit);
     }
 
+    public static void repeat(int times, VoidTask task) {
+        for (int i = 0; i < times; i++) {
+            task.invoke();
+        }
+    }
+
     //---- Background Stuff ----//
     public static void updateBackground() {
         RepeatManager.update();

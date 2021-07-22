@@ -3,11 +3,9 @@ package club.eridani.cursa.module.modules.combat;
 import club.eridani.cursa.client.FontManager;
 import club.eridani.cursa.client.FriendManager;
 import club.eridani.cursa.client.GUIManager;
-import club.eridani.cursa.common.annotations.*;
-import club.eridani.cursa.common.types.IO;
-import club.eridani.cursa.common.types.Tick;
+import club.eridani.cursa.common.annotations.Module;
+import club.eridani.cursa.common.annotations.ParallelLoadable;
 import club.eridani.cursa.concurrent.repeat.RepeatUnit;
-import club.eridani.cursa.concurrent.task.VoidTask;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.event.events.render.RenderModelEvent;
 import club.eridani.cursa.event.events.render.RenderWorldEvent;
@@ -16,7 +14,9 @@ import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
 import club.eridani.cursa.utils.*;
+import club.eridani.cursa.utils.math.Pair;
 import net.minecraft.block.Block;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -28,7 +28,9 @@ import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.client.CPacketPlayer;
 import net.minecraft.network.play.client.CPacketPlayerTryUseItemOnBlock;
+import net.minecraft.network.play.client.CPacketUseEntity;
 import net.minecraft.network.play.server.SPacketSoundEffect;
+import net.minecraft.network.play.server.SPacketSpawnObject;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.NonNullList;
@@ -42,31 +44,46 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static club.eridani.cursa.concurrent.TaskManager.repeat;
 import static club.eridani.cursa.concurrent.TaskManager.runRepeat;
 import static club.eridani.cursa.utils.CrystalUtil.*;
 import static org.lwjgl.opengl.GL11.GL_QUADS;
 
 /**
  * Created by B_312 on 01/15/21
- * Updated by B_312 on 06/06/21
+ * Updated by B_312 on 07/22/21
+ * This Crystal is Under GNU Public License v3 instead of MIT
+ * Commercial use is forbidden
+ * Only personal use is allowed
+ * If you want to use some parts of this AutoCrystal for your personal use,It's OK
+ * But if you want to distribute your client or modified code
+ * You have to public it and credit EridaniTeam
  */
 @ParallelLoadable
 @Module(name = "CursaAura", category = Category.COMBAT)
-public class CursaAura extends ModuleBase {
+public strictfp class CursaAura extends ModuleBase {
+
+    public static CursaAura INSTANCE;
 
     Setting<String> page = setting("Page", "General", listOf("General", "Calculation", "Render"));
 
     //General
     Setting<Boolean> autoSwitch = setting("AutoSwitch", false).whenAtMode(page, "General");
-    Setting<String> updateMode = setting("Update", "Thread", "Tick", "Render", "Parallel", "Fast", "Thread").whenAtMode(page, "General");
-    Setting<Integer> threadDelay = setting("ThreadDelay", 10, 1, 50).whenAtMode(page, "General").whenAtMode(updateMode, "Thread");
+    Setting<Integer> threadDelay = setting("ThreadDelay", 10, 1, 50).whenAtMode(page, "General");
     Setting<Boolean> targetPlayer = setting("Players", true).whenAtMode(page, "General");
     Setting<Boolean> targetMob = setting("Mobs", false).whenAtMode(page, "General");
     Setting<Boolean> targetAnimal = setting("Animals", false).whenAtMode(page, "General");
     Setting<Boolean> autoPlace = setting("Place", true).whenAtMode(page, "General");
     Setting<Boolean> autoExplode = setting("Explode", true).whenAtMode(page, "General");
+    Setting<Boolean> packetExplode = setting("PacketExplode", true).whenAtMode(page, "General");
+    Setting<Boolean> predictExplode = setting("PredictExplode", false).whenAtMode(page, "General");
+    Setting<Integer> predictExplodeCount = setting("PredictHitCount", 2, 1, 20).whenAtMode(page, "General").whenTrue(predictExplode);
+    Setting<Boolean> clearClickDelay = setting("ClearClickDelay", true).whenAtMode(page, "General");
     Setting<Boolean> multiPlace = setting("MultiPlace", false).whenAtMode(page, "General");
     Setting<Double> attackSpeed = setting("AttackSpeed", 35d, 0, 50).whenAtMode(page, "General");
     Setting<Double> placeSpeed = setting("PlaceSpeed", 35d, 0d, 50).whenAtMode(page, "General");
@@ -87,7 +104,7 @@ public class CursaAura extends ModuleBase {
     Setting<String> attackMode = setting("HitMode", "Smart", listOf("Smart", "Always")).whenAtMode(page, "Calculation");
     Setting<Double> breakMinDmg = setting("BreakMinDmg", 4.5, 0.0, 36.0).whenAtMode(page, "Calculation").whenAtMode(attackMode, "Smart");
     Setting<Double> breakMaxSelf = setting("BreakMaxSelf", 12.0, 0.0, 36.0).whenAtMode(page, "Calculation").whenAtMode(attackMode, "Smart");
-    Setting<Boolean> popTotemTry = setting("PopTotemTry", true).whenAtMode(page, "Calculation").whenAtMode(attackMode, "Smart");
+    Setting<Boolean> lethalTryIt = setting("LethalTryIt", true).whenAtMode(page, "Calculation").whenAtMode(attackMode, "Smart");
     Setting<Boolean> ghostHand = setting("GhostHand", false).whenAtMode(page, "Calculation");
     Setting<Boolean> pauseWhileEating = setting("PauseWhileEating", false).whenAtMode(page, "Calculation");
     Setting<Boolean> clientSide = setting("ClientSideConfirm", false).whenAtMode(page, "Calculation");
@@ -98,96 +115,125 @@ public class CursaAura extends ModuleBase {
     Setting<Integer> red = setting("Red", 255, 0, 255).whenAtMode(page, "Render").whenFalse(syncGUI);
     Setting<Integer> green = setting("Green", 0, 0, 255).whenAtMode(page, "Render").whenFalse(syncGUI);
     Setting<Integer> blue = setting("Blue", 0, 0, 255).whenAtMode(page, "Render").whenFalse(syncGUI);
-    Setting<Integer> transparency = setting("Alpha", 70, 0, 255).whenAtMode(page, "Render");
+    Setting<Integer> transparency = setting("Alpha", 26, 0, 255).whenAtMode(page, "Render");
     Setting<Boolean> rainbow = setting("Rainbow", false).whenAtMode(page, "Render").whenFalse(syncGUI);
     Setting<Float> rainbowSpeed = setting("RGB Speed", 1.0f, 0.0f, 10.0f).whenAtMode(page, "Render").whenFalse(syncGUI);
     Setting<Float> saturation = setting("Saturation", 0.65f, 0.0f, 1.0f).whenAtMode(page, "Render").whenFalse(syncGUI);
     Setting<Float> brightness = setting("Brightness", 1.0f, 0.0f, 1.0f).whenAtMode(page, "Render").whenFalse(syncGUI);
 
-    public static float yaw;
-    public static float pitch;
-    public static float renderPitch;
-    public static boolean shouldSpoofPacket;
-    public static Entity target;
-    private int placements = 0;
-    private int oldSlot = -1;
-    private int prevSlot;
-    private boolean switchCoolDown;
-    private boolean togglePitch = false;
-    private BlockPos renderBlock;
-    private static boolean rotating = false;
-    Timer placeTimer = new Timer();
-    Timer breakTimer = new Timer();
+    transient public static float yaw;
+    transient public static float pitch;
+    transient public static float renderPitch;
+    transient public static boolean shouldSpoofPacket;
+    transient public static Entity target;
+    transient private int placements = 0;
+    transient private int oldSlot = -1;
+    transient private int prevSlot;
+    transient private boolean switchCoolDown;
+    transient private boolean togglePitch = false;
+    transient private BlockPos renderBlock;
+    transient private static boolean rotating = false;
+    transient Timer placeTimer = new Timer();
+    transient Timer breakTimer = new Timer();
+    transient Timer packetBreakTimer = new Timer();
+    transient AtomicBoolean shouldIgnoreEntity = new AtomicBoolean(false);
+
+    transient AtomicInteger lastEntityId = new AtomicInteger(-1);
+
+    private final LocalTarget localTarget = new LocalTarget();
     private final HashMap<BlockPos, Double> renderBlockDmg = new HashMap<>();
 
-    RepeatUnit placeCalculation = new RepeatUnit(() -> (int) ((1000 / placeSpeed.getValue()) - 5), () -> {
+    RepeatUnit placeCalculation = new RepeatUnit(() -> (int) ((1000 / placeSpeed.getValue()) - 5) / (multiPlace.getValue() ? 1 : 2), () -> {
         if (mc.player == null || mc.world == null) return;
-        if (multiPlace.getValue() || !updateMode.getValue().equals("Thread")) {
-            CursaAura.placeTarget = Calculator();
-        }
+        if (multiPlace.getValue()) localTarget.putPlaceTarget(calculator(shouldIgnoreEntity.get()));
+    }).timeOut(it -> {
+        ChatUtil.printErrorChatMessage("Can't keep up!You should");
     });
 
     RepeatUnit breakCalculation = new RepeatUnit(() -> (int) ((1000 / attackSpeed.getValue()) - 5), () -> {
         if (mc.player == null || mc.world == null) return;
-        CursaAura.attackCrystalTarget = new ArrayList<>(mc.world.loadedEntityList).stream()
+        localTarget.putAttackTarget(new ArrayList<>(mc.world.loadedEntityList).stream()
                 .filter(e -> e instanceof EntityEnderCrystal && canHitCrystal(e.getPositionVector()))
                 .map(e -> (EntityEnderCrystal) e)
-                .min(Comparator.comparing(e -> mc.player.getDistance(e))).orElse(null);
+                .min(Comparator.comparing(e -> mc.player.getDistance(e))).orElse(null));
     });
 
     List<RepeatUnit> repeatUnits = new ArrayList<>();
 
     public CursaAura() {
+        INSTANCE = this;
         repeatUnits.add(placeCalculation);
         repeatUnits.add(breakCalculation);
         repeatUnits.add(updateAutoCrystal);
-
-        //Register repeat units
         repeatUnits.forEach(it -> {
             it.suspend();
             runRepeat(it);
         });
     }
 
-    @PacketListener(channel = IO.Receive, target = SPacketSoundEffect.class)
+    @Override
     public void onPacketReceive(PacketEvent.Receive event) {
         if (mc.player == null || mc.world == null) return;
-        //Clear click delay
-        if (mc.player.getHeldItemMainhand().getItem() == Items.END_CRYSTAL || mc.player.getHeldItemOffhand().getItem() == Items.END_CRYSTAL) {
+        if (clearClickDelay.getValue() && mc.player.getHeldItemMainhand().getItem() == Items.END_CRYSTAL || mc.player.getHeldItemOffhand().getItem() == Items.END_CRYSTAL) {
             mc.rightClickDelayTimer = 0;
         }
-        //Sounds confirm makes us update world entity faster
-        SPacketSoundEffect packet = (SPacketSoundEffect) event.packet;
-        if (packet.getCategory() == SoundCategory.BLOCKS && packet.getSound() == SoundEvents.ENTITY_GENERIC_EXPLODE) {
-            new ArrayList<>(mc.world.loadedEntityList).stream()
-                    .filter(it -> it instanceof EntityEnderCrystal)
-                    .filter(it -> it.getDistance(packet.getX(), packet.getY(), packet.getZ()) <= 6.0f)
-                    .forEach(Entity::setDead);
+        if (event.packet instanceof SPacketSoundEffect) {
+            SPacketSoundEffect packet = (SPacketSoundEffect) event.packet;
+            if (packet.getCategory() == SoundCategory.BLOCKS && packet.getSound() == SoundEvents.ENTITY_GENERIC_EXPLODE) {
+                new ArrayList<>(mc.world.loadedEntityList).stream()
+                        .filter(it -> it instanceof EntityEnderCrystal)
+                        .filter(it -> it.getDistance(packet.getX(), packet.getY(), packet.getZ()) <= 6.0f)
+                        .forEach(Entity::setDead);
+            }
         }
+        if (event.packet instanceof SPacketSpawnObject) {
+            if (((SPacketSpawnObject) (event.packet)).getType() == 51) {
+                lastEntityId.getAndUpdate(it -> Math.max(it, ((SPacketSpawnObject) (event.packet)).getEntityID()));
+                if (packetExplode.getValue()) packetBreak(mc.player, (SPacketSpawnObject) event.packet);
+            } else {
+                lastEntityId.set(-1);
+            }
+        }
+    }
+
+    private void packetBreak(EntityPlayerSP player, SPacketSpawnObject packet) {
+        if ((1000 / attackSpeed.getValue()) > 0 && !packetBreakTimer.passed((1000 / attackSpeed.getValue()))) return;
+        double distance = player.getDistance(packet.getX(), packet.getY(), packet.getZ());
+        if (distance > hitRange.getValue()) return;
+        Vec3d pos = new Vec3d(packet.getX(), packet.getY(), packet.getZ());
+        if (wall.getValue() && distance > wallRange.getValue() && !canSeeBlock(new BlockPos(pos)))
+            return;
+        if (!canHitCrystal(pos)) return;
+        CPacketUseEntity attackPacket = new CPacketUseEntity();
+        attackPacket.entityId = packet.getEntityID();
+        attackPacket.action = CPacketUseEntity.Action.ATTACK;
+        mc.player.connection.sendPacket(attackPacket);
+        if (rotate.getValue()) lookAt(pos);
+        packetBreakTimer.reset();
     }
 
     @Listener
     public void renderModelRotation(RenderModelEvent event) {
         if (!rotate.getValue()) return;
-        //Update pitch
         if (rotating) {
             event.rotating = true;
             event.pitch = renderPitch;
         }
     }
 
-    @PacketListener(channel = IO.Send, target = CPacketPlayer.class)
+    @Override
     public void onPacketSend(PacketEvent.Send event) {
         if (mc.player == null) return;
         if (!rotate.getValue()) {
             return;
         }
-        //Spoof rotation packets
-        CPacketPlayer packet = (CPacketPlayer) event.packet;
-        if (shouldSpoofPacket) {
-            packet.yaw = yaw;
-            packet.pitch = pitch;
-            shouldSpoofPacket = false;
+        if (event.packet instanceof CPacketPlayer) {
+            CPacketPlayer packet = (CPacketPlayer) event.packet;
+            if (shouldSpoofPacket) {
+                packet.yaw = yaw;
+                packet.pitch = pitch;
+                shouldSpoofPacket = false;
+            }
         }
     }
 
@@ -216,10 +262,9 @@ public class CursaAura extends ModuleBase {
                     minDamage = 1;
                 }
                 double target = calculateDamage(crystal.x, crystal.y, crystal.z, player, player.getPositionVector());
-                //If we can pop enemies totem,then we try it!
                 if (target > player.getHealth() + player.getAbsorptionAmount()
                         && selfDamage < mc.player.getHealth() + mc.player.getAbsorptionAmount()
-                        && popTotemTry.getValue()
+                        && lethalTryIt.getValue()
                 ) return true;
                 if (selfDamage > maxSelf) continue;
                 if (target < minDamage) continue;
@@ -246,8 +291,7 @@ public class CursaAura extends ModuleBase {
                 mc.playerController.attackEntity(mc.player, crystal);
                 mc.player.swingArm(mc.player.getHeldItemOffhand().getItem() == Items.END_CRYSTAL ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND);
                 if (clientSide.getValue()) {
-                    //This may cause deSync!
-                    crystal.setDead();
+                    if (mc.player.canEntityBeSeen(crystal)) crystal.setDead();
                 }
                 mc.player.resetCooldown();
             }
@@ -256,16 +300,26 @@ public class CursaAura extends ModuleBase {
     }
 
     private void placeCrystal(BlockPos targetBlock, EnumHand enumHand) {
-        EnumFacing facing;
-        if (rayTrace.getValue()) facing = enumFacing(targetBlock);
-        else facing = EnumFacing.UP;
+        EnumFacing facing = rayTrace.getValue() ? enumFacing(targetBlock) : EnumFacing.UP;
         if (rotate.getValue()) lookAtPos(targetBlock, facing);
-        for (int i = 0; i < 3; i++) {
-            if (placeDelayRun(placeSpeed.getValue())) {
+        if (placeDelayRun(placeSpeed.getValue())) {
+            repeat(3, () -> {
                 mc.player.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(targetBlock, facing, enumHand, 0, 0, 0));
-                placeTimer.reset();
                 placements++;
+            });
+            if (predictExplode.getValue()) {
+                int syncedId = lastEntityId.get();
+                AtomicInteger count = new AtomicInteger(0);
+                repeat(predictExplodeCount.getValue(), () -> {
+                    if (syncedId != -1) {
+                        CPacketUseEntity attackPacket = new CPacketUseEntity();
+                        attackPacket.entityId = syncedId + count.getAndIncrement() + 1;
+                        attackPacket.action = CPacketUseEntity.Action.ATTACK;
+                        mc.player.connection.sendPacket(attackPacket);
+                    }
+                });
             }
+            placeTimer.reset();
         }
     }
 
@@ -335,7 +389,7 @@ public class CursaAura extends ModuleBase {
         if (base != Blocks.BEDROCK && base != Blocks.OBSIDIAN) return false;
 
         if (b1 != Blocks.AIR && !isReplaceable(b1)) return false;
-        if (newPlace && b2 != Blocks.AIR) return false;
+        if (!newPlace && b2 != Blocks.AIR) return false;
 
         AxisAlignedBB box = new AxisAlignedBB(
                 blockPos.x, blockPos.y + 1.0, blockPos.z,
@@ -345,7 +399,7 @@ public class CursaAura extends ModuleBase {
         List<Entity> entities = new ArrayList<>(mc.world.loadedEntityList);
 
         for (Entity entity : entities) {
-            if (shouldIgnoreEntity && !multiPlace.getValue() && entity instanceof EntityEnderCrystal) continue;
+            if (shouldIgnoreEntity.get() && !multiPlace.getValue() && entity instanceof EntityEnderCrystal) continue;
             if (entity.getEntityBoundingBox().intersects(box)) return false;
         }
         return true;
@@ -354,6 +408,12 @@ public class CursaAura extends ModuleBase {
     public void lookAtPos(BlockPos block, EnumFacing face) {
         float[] v = RotationUtil.getRotationsBlock(block, face, false);
         float[] v2 = RotationUtil.getRotationsBlock(block.add(0, +0.5, 0), face, false);
+        setYawAndPitch(v[0], v[1], v2[1]);
+    }
+
+    public void lookAt(Vec3d vec3d) {
+        float[] v = RotationUtil.getRotations(mc.player.getPositionEyes(mc.getRenderPartialTicks()), vec3d);
+        float[] v2 = RotationUtil.getRotations(mc.player.getPositionEyes(mc.getRenderPartialTicks()), vec3d.add(0, -0.5, 0));
         setYawAndPitch(v[0], v[1], v2[1]);
     }
 
@@ -373,27 +433,25 @@ public class CursaAura extends ModuleBase {
         rotating = true;
     }
 
-    public static EntityEnderCrystal attackCrystalTarget;
-    public static CrystalTarget placeTarget;
-
-    volatile boolean shouldIgnoreEntity = false;
-
-    VoidTask updateTask = () -> {
+    RepeatUnit updateAutoCrystal = new RepeatUnit(() -> threadDelay.getValue(), () -> {
         if (mc.player == null || mc.world == null) return;
 
         if (placeTimer.passed(1050) || breakTimer.passed(1050)) rotating = false;
         if (pauseWhileEating.getValue() && isEating()) return;
 
+        localTarget.checkAll((int) (1000 / placeSpeed.getValue()), (int) (1000 / attackSpeed.getValue()));
+
+        EntityEnderCrystal attackCrystalTarget = localTarget.getAttackTarget();
+
         if (autoExplode.getValue() && attackCrystalTarget != null) {
             if (!mc.player.canEntityBeSeen(attackCrystalTarget) && mc.player.getDistance(attackCrystalTarget) > wallRange.getValue() && wall.getValue()) {
-                shouldIgnoreEntity = false;
+                shouldIgnoreEntity.set(false);
             } else {
                 explodeCrystal(attackCrystalTarget);
-                attackCrystalTarget = null;
-                if (!multiPlace.getValue()) shouldIgnoreEntity = true;
+                if (!multiPlace.getValue()) shouldIgnoreEntity.set(true);
                 if (placements >= 3) {
                     placements = 0;
-                    shouldIgnoreEntity = true;
+                    shouldIgnoreEntity.set(true);
                 }
             }
         } else {
@@ -418,7 +476,7 @@ public class CursaAura extends ModuleBase {
         if (mc.player.getHeldItemOffhand().getItem() == Items.END_CRYSTAL) offhand = true;
         else if (crystalSlot == -1) return;
         BlockPos targetBlock = null;
-        if (!multiPlace.getValue()) placeTarget = Calculator();
+        CrystalTarget placeTarget = multiPlace.getValue() ? localTarget.getPlaceTarget(shouldIgnoreEntity.get()) : calculator(shouldIgnoreEntity.get());
         if (placeTarget != null) {
             target = placeTarget.target;
             targetBlock = placeTarget.blockPos;
@@ -459,37 +517,13 @@ public class CursaAura extends ModuleBase {
             mc.player.inventory.currentItem = prevSlot;
             mc.playerController.updateController();
         }
-    };
-
-    RepeatUnit updateAutoCrystal = new RepeatUnit(() -> threadDelay.getValue(), () -> {
-        if (updateMode.getValue().equals("Thread")) updateTask.invoke();
     });
-
-    @TickUpdate(type = Tick.Client)
-    public void onTick() {
-        if (updateMode.getValue().equals("Tick")) updateTask.invoke();
-    }
-
-    @TickUpdate(type = Tick.Render)
-    public void onRenderTick() {
-        if (updateMode.getValue().equals("Render")) updateTask.invoke();
-    }
-
-    @ParallelRunnable(type = Tick.Client)
-    public void onParallelTick() {
-        if (updateMode.getValue().equals("Parallel")) updateTask.invoke();
-    }
-
-    @ParallelRunnable(type = Tick.Render)
-    public void onParallelRenderTick() {
-        if (updateMode.getValue().equals("Fast")) updateTask.invoke();
-    }
 
     /**
      * Calculation of target block to place crystal
      * return a target contains coordinate and target entity.
      */
-    private CrystalTarget Calculator() {
+    private CrystalTarget calculator(boolean ignoredEntity) {
         double damage = 0.5;
         BlockPos tempBlock = null;
         Entity target = null;
@@ -504,37 +538,30 @@ public class CursaAura extends ModuleBase {
                     if (entity2.getDistanceSq(blockPos) >= distance.getValue() * distance.getValue()) continue;
                     if (mc.player.getDistance(blockPos.getX(), blockPos.getY(), blockPos.getZ()) > placeRange.getValue())
                         continue;
-
                     double targetDamage = calculateDamage(blockPos.getX() + 0.5, blockPos.getY() + 1, blockPos.getZ() + 0.5, entity2, targetVec);
-
                     if (targetDamage < damage) continue;
                     if (targetDamage < (facePlace.getValue() ? (canFacePlace((EntityLivingBase) entity2, blastHealth.getValue()) ? 1 : placeMinDmg.getValue()) : placeMinDmg.getValue()))
                         continue;
-
                     float healthTarget = ((EntityLivingBase) entity2).getHealth() + ((EntityLivingBase) entity2).getAbsorptionAmount();
                     float healthSelf = mc.player.getHealth() + mc.player.getAbsorptionAmount();
                     double selfDamage = calculateDamage(blockPos.getX() + 0.5, blockPos.getY() + 1, blockPos.getZ() + 0.5, mc.player);
-
                     if (selfDamage > targetDamage && targetDamage < healthTarget) continue;
                     if (selfDamage - 0.5 > healthSelf && noSuicide.getValue()) continue;
                     if (selfDamage > placeMaxSelf.getValue()) continue;
-
                     if (!wall.getValue()
                             && wallRange.getValue() > 0
                             && !canSeeBlock(blockPos)
                             && getVecDistance(blockPos, mc.player.posX, mc.player.posY, mc.player.posZ) >= wallRange.getValue()
                     ) continue;
-
                     damage = targetDamage;
                     tempBlock = blockPos;
                     target = entity2;
-
                     if (renderDmg.getValue()) renderBlockDmg.put(tempBlock, targetDamage);
                 }
                 if (target != null) break;
             }
         }
-        return new CrystalTarget(tempBlock, target);
+        return new CrystalTarget(tempBlock, target, ignoredEntity);
     }
 
     private void ghostHand() {
@@ -563,16 +590,6 @@ public class CursaAura extends ModuleBase {
         return entities;
     }
 
-    private static class CrystalTarget {
-        public BlockPos blockPos;
-        public Entity target;
-
-        public CrystalTarget(BlockPos block, Entity target) {
-            this.blockPos = block;
-            this.target = target;
-        }
-    }
-
     public int getColor() {
         float[] tick_color = {(System.currentTimeMillis() % 11520L) / 11520.0f * rainbowSpeed.getValue()};
         int color_rgb = Color.HSBtoRGB(tick_color[0], saturation.getValue(), brightness.getValue());
@@ -592,7 +609,8 @@ public class CursaAura extends ModuleBase {
 
     @Override
     public void onEnable() {
-        shouldIgnoreEntity = false;
+        lastEntityId.set(-1);
+        shouldIgnoreEntity.set(false);
         repeatUnits.forEach(RepeatUnit::resume);
         renderBlockDmg.clear();
     }
@@ -604,10 +622,68 @@ public class CursaAura extends ModuleBase {
         resetRotation();
         placeTimer.restart();
         breakTimer.restart();
+        packetBreakTimer.restart();
         renderBlock = null;
         target = null;
         yaw = mc.player.rotationYaw;
         pitch = mc.player.rotationPitch;
+    }
+
+    private static class CrystalTarget {
+        public BlockPos blockPos;
+        public Entity target;
+        public boolean ignoredEntity;
+
+        public CrystalTarget(BlockPos block, Entity target, boolean ignoredEntity) {
+            this.blockPos = block;
+            this.target = target;
+            this.ignoredEntity = ignoredEntity;
+        }
+    }
+
+    public static class LocalTarget {
+        final LinkedBlockingDeque<Pair<EntityEnderCrystal, Timer>> attackTargets = new LinkedBlockingDeque<>();
+        final LinkedBlockingDeque<Pair<CrystalTarget, Timer>> placeTargets = new LinkedBlockingDeque<>();
+
+        public synchronized void checkAll(int placeDelay, int attackDelay) {
+            synchronized (attackTargets) {
+                synchronized (placeTargets) {
+                    attackTargets.removeIf(it -> it.b.passed(attackDelay));
+                    placeTargets.removeIf(it -> it.b.passed(placeDelay));
+                }
+            }
+        }
+
+        public synchronized void putAttackTarget(EntityEnderCrystal attackTarget) {
+            synchronized (attackTargets) {
+                attackTargets.add(new Pair<>(attackTarget, new Timer().reset()));
+            }
+        }
+
+        public synchronized EntityEnderCrystal getAttackTarget() {
+            synchronized (attackTargets) {
+                Pair<EntityEnderCrystal, Timer> pair = attackTargets.pollLast();
+                return pair == null ? null : pair.a;
+            }
+        }
+
+        public synchronized void putPlaceTarget(CrystalTarget placeTarget) {
+            synchronized (placeTargets) {
+                placeTargets.add(new Pair<>(placeTarget, new Timer().reset()));
+            }
+        }
+
+        public synchronized CrystalTarget getPlaceTarget(boolean shouldIgnoreEntity) {
+            synchronized (placeTargets) {
+                while (true) {
+                    Pair<CrystalTarget, Timer> pair = placeTargets.pollLast();
+                    if (pair == null) break;
+                    if (pair.a.ignoredEntity == shouldIgnoreEntity) return pair.a;
+                }
+                return CursaAura.INSTANCE.calculator(CursaAura.INSTANCE.shouldIgnoreEntity.get());
+            }
+        }
+
     }
 
 }

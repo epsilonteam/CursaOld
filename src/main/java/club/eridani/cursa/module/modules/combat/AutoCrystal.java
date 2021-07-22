@@ -3,10 +3,6 @@ package club.eridani.cursa.module.modules.combat;
 import club.eridani.cursa.client.FriendManager;
 import club.eridani.cursa.client.GUIManager;
 import club.eridani.cursa.common.annotations.Module;
-import club.eridani.cursa.common.annotations.PacketListener;
-import club.eridani.cursa.common.annotations.TickUpdate;
-import club.eridani.cursa.common.types.IO;
-import club.eridani.cursa.common.types.Tick;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.event.events.render.RenderWorldEvent;
 import club.eridani.cursa.module.Category;
@@ -70,7 +66,7 @@ public class AutoCrystal extends ModuleBase {
     BlockPos renderBlock = null;
     float yaw, pitch;
 
-    @TickUpdate(type = Tick.RenderWorld)
+    @Override
     public void onTick() {
         if (mc.player == null || mc.world == null) return;
         renderBlock = null;
@@ -149,27 +145,31 @@ public class AutoCrystal extends ModuleBase {
         renderBlock = null;
     }
 
-    @PacketListener(channel = IO.Send, target = CPacketPlayer.class)
+    @Override
     public void onPacketSend(PacketEvent.Send event) {
         if (mc.player == null || mc.world == null) return;
         if (spoofRotations.getValue()) {
-            CPacketPlayer packet = (CPacketPlayer) event.getPacket();
-            if (isSpoofingAngles) {
-                (packet).yaw = yaw;
-                (packet).pitch = pitch;
+            if (event.packet instanceof CPacketPlayer) {
+                CPacketPlayer packet = (CPacketPlayer) event.getPacket();
+                if (isSpoofingAngles) {
+                    (packet).yaw = yaw;
+                    (packet).pitch = pitch;
+                }
             }
         }
     }
 
-    @PacketListener(channel = IO.Receive, target = SPacketSoundEffect.class)
+    @Override
     public void onPacketReceive(PacketEvent.Receive event) {
         if (mc.player == null || mc.world == null) return;
-        SPacketSoundEffect packet = (SPacketSoundEffect) event.packet;
-        if (packet.getCategory() == SoundCategory.BLOCKS && packet.getSound() == SoundEvents.ENTITY_GENERIC_EXPLODE) {
-            for (Entity e : Minecraft.getMinecraft().world.loadedEntityList) {
-                if (e instanceof EntityEnderCrystal) {
-                    if (e.getDistance(packet.getX(), packet.getY(), packet.getZ()) <= 6.0f) {
-                        e.setDead();
+        if (event.packet instanceof SPacketSoundEffect) {
+            SPacketSoundEffect packet = (SPacketSoundEffect) event.packet;
+            if (packet.getCategory() == SoundCategory.BLOCKS && packet.getSound() == SoundEvents.ENTITY_GENERIC_EXPLODE) {
+                for (Entity e : Minecraft.getMinecraft().world.loadedEntityList) {
+                    if (e instanceof EntityEnderCrystal) {
+                        if (e.getDistance(packet.getX(), packet.getY(), packet.getZ()) <= 6.0f) {
+                            e.setDead();
+                        }
                     }
                 }
             }

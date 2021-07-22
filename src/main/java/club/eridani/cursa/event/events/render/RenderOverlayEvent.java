@@ -9,6 +9,11 @@ public final class RenderOverlayEvent extends CursaEvent {
     private final float partialTicks;
     private final ScaledResolution scaledResolution;
 
+    public RenderOverlayEvent() {
+        this.partialTicks = Minecraft.getMinecraft().getRenderPartialTicks();
+        this.scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+    }
+
     public RenderOverlayEvent(float partialTicks) {
         this.partialTicks = partialTicks;
         this.scaledResolution = new ScaledResolution(Minecraft.getMinecraft());

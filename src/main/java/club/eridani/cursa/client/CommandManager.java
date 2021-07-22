@@ -2,6 +2,7 @@ package club.eridani.cursa.client;
 
 import club.eridani.cursa.Cursa;
 import club.eridani.cursa.command.CommandBase;
+import club.eridani.cursa.concurrent.task.VoidTask;
 import club.eridani.cursa.event.events.client.ChatEvent;
 import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.utils.ChatUtil;
@@ -14,20 +15,22 @@ import java.util.Set;
 
 import static club.eridani.cursa.concurrent.TaskManager.launch;
 
-public class CommandManager {
+public class CommandManager implements VoidTask {
 
     public static String cmdPrefix = ".";
     public List<CommandBase> commands = new ArrayList<>();
 
-    public static void init() {
-        if (instance == null) instance = new CommandManager();
+    @Override
+    public void invoke() {
+        Cursa.log.info("Loading Command Manager");
+        instance = this;
         instance.commands.clear();
         instance.loadCommands();
         Cursa.EVENT_BUS.register(instance);
     }
 
     private void loadCommands() {
-        Set<Class<? extends CommandBase>> classList = ClassUtil.findClasses(CommandBase.class.getPackage().getName(), CommandBase.class);
+        Set<Class<? extends CommandBase>> classList = ClassUtil.findClasses(Cursa.class.getPackage().getName(), CommandBase.class);
         classList.stream().sorted(Comparator.comparing(Class::getSimpleName)).forEach(clazz -> {
             try {
                 CommandBase command = clazz.newInstance();

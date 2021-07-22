@@ -3,8 +3,10 @@ package club.eridani.cursa.module;
 import club.eridani.cursa.Cursa;
 import club.eridani.cursa.common.annotations.Module;
 import club.eridani.cursa.event.events.client.InputUpdateEvent;
+import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.event.events.render.RenderOverlayEvent;
 import club.eridani.cursa.event.events.render.RenderWorldEvent;
+import club.eridani.cursa.notification.NotificationManager;
 import club.eridani.cursa.setting.Setting;
 import club.eridani.cursa.setting.settings.*;
 import net.minecraft.client.Minecraft;
@@ -66,13 +68,33 @@ public class ModuleBase {
     public void enable() {
         enabled = true;
         Cursa.MODULE_BUS.register(this);
+        NotificationManager.moduleToggle(this, true);
         onEnable();
     }
 
     public void disable() {
         enabled = false;
         Cursa.MODULE_BUS.unregister(this);
+        NotificationManager.moduleToggle(this, false);
         onDisable();
+    }
+
+    public void onPacketReceive(PacketEvent.Receive event) {
+    }
+
+    public void onPacketSend(PacketEvent.Send event) {
+    }
+
+    public void onParallelRenderTick() {
+    }
+
+    public void onParallelTick() {
+    }
+
+    public void onTick() {
+    }
+
+    public void onRenderTick() {
     }
 
     public void onEnable() {

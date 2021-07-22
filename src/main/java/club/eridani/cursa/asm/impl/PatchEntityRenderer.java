@@ -1,9 +1,7 @@
 package club.eridani.cursa.asm.impl;
 
-import club.eridani.cursa.Cursa;
 import club.eridani.cursa.asm.api.ClassPatch;
 import club.eridani.cursa.asm.api.MappingName;
-import club.eridani.cursa.event.events.render.RenderOverlayEvent;
 import club.eridani.cursa.utils.ASMUtil;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -50,7 +48,7 @@ public class PatchEntityRenderer extends ClassPatch {
     }
 
     public static void updateCameraAndRenderHook(float partialTicks) {
-        Cursa.EVENT_BUS.post(new RenderOverlayEvent(partialTicks));
+        //Cursa.EVENT_BUS.post(new RenderOverlayEvent(partialTicks));
     }
 
 }

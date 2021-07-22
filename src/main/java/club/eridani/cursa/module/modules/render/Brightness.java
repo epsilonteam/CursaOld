@@ -2,7 +2,6 @@ package club.eridani.cursa.module.modules.render;
 
 import club.eridani.cursa.common.annotations.Module;
 import club.eridani.cursa.common.annotations.ParallelLoadable;
-import club.eridani.cursa.common.annotations.ParallelRunnable;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
@@ -55,7 +54,7 @@ public class Brightness extends ModuleBase {
         addTransition(false);
     }
 
-    @ParallelRunnable
+    @Override
     public void onParallelTick() {
         if (inTransition) {
             if (transitionStack.isEmpty()) {

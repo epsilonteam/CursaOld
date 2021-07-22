@@ -1,10 +1,7 @@
 package club.eridani.cursa.module.modules.render;
 
 import club.eridani.cursa.common.annotations.Module;
-import club.eridani.cursa.common.annotations.PacketListener;
 import club.eridani.cursa.common.annotations.ParallelLoadable;
-import club.eridani.cursa.common.annotations.ParallelRunnable;
-import club.eridani.cursa.common.types.IO;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
@@ -27,7 +24,7 @@ public class AntiOverlay extends ModuleBase {
     Setting<Boolean> explosion = setting("Explosions", true);
     Setting<Boolean> paint = setting("Paintings", false);
 
-    @ParallelRunnable
+    @Override
     public void onParallelTick() {
         if (mc.player == null) return;
         if (blindness.getValue()) {
@@ -39,7 +36,7 @@ public class AntiOverlay extends ModuleBase {
         }
     }
 
-    @PacketListener(channel = IO.Receive)
+    @Override
     public void onPacketReceive(PacketEvent.Receive event) {
         Packet<?> packet = event.packet;
         if ((packet instanceof SPacketSpawnExperienceOrb && xp.getValue())

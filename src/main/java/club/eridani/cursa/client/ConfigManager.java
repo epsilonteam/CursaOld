@@ -1,6 +1,7 @@
 package club.eridani.cursa.client;
 
 import club.eridani.cursa.Cursa;
+import club.eridani.cursa.concurrent.task.VoidTask;
 import club.eridani.cursa.gui.GUIRenderer;
 import club.eridani.cursa.gui.Panel;
 import club.eridani.cursa.module.ModuleBase;
@@ -16,7 +17,7 @@ import java.util.Map;
 import static club.eridani.cursa.utils.ListUtil.listOf;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
-public class ConfigManager {
+public class ConfigManager implements VoidTask {
 
     private static final String CONFIG_PATH = "Cursa/config/";
     private static final Gson gsonPretty = new GsonBuilder().setPrettyPrinting().create();
@@ -316,8 +317,10 @@ public class ConfigManager {
         return instance;
     }
 
-    public static void init() {
-        if (instance == null) instance = new ConfigManager();
+    @Override
+    public void invoke() {
+        Cursa.log.info("Loading Config Manager");
+        instance = this;
         instance.onInit();
     }
 }

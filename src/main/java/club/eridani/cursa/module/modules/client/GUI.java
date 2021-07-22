@@ -14,8 +14,8 @@ public class GUI extends ModuleBase {
     public Setting<Float> rainbowSpeed = setting("Rainbow Speed", 1.0f,0.0f,30.0f).whenTrue(rainbow);
     public Setting<Float> rainbowSaturation = setting("Saturation",0.75f,0.0f,1.0f).whenTrue(rainbow);
     public Setting<Float> rainbowBrightness = setting("Brightness",0.8f,0.0f,1.0f).whenTrue(rainbow);
-    public Setting<Integer> red = setting("Red",0,0,255).whenFalse(rainbow);
-    public Setting<Integer> green = setting("Green",96,0,255).whenFalse(rainbow);
+    public Setting<Integer> red = setting("Red",70,0,255).whenFalse(rainbow);
+    public Setting<Integer> green = setting("Green",170,0,255).whenFalse(rainbow);
     public Setting<Integer> blue = setting("Blue",255,0,255).whenFalse(rainbow);
     public Setting<Integer> transparency = setting("Transparency",200,0,255);
     public Setting<Boolean> particle = setting("Particle",true);

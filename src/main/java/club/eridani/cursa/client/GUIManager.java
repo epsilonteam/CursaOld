@@ -1,15 +1,19 @@
 package club.eridani.cursa.client;
 
+import club.eridani.cursa.Cursa;
+import club.eridani.cursa.concurrent.task.VoidTask;
 import club.eridani.cursa.module.modules.client.GUI;
 import club.eridani.cursa.utils.ColorUtil;
 
 import java.awt.*;
 
-public class GUIManager {
+public class GUIManager implements VoidTask {
 
     public static GUI guiSetting;
 
-    public static void init(){
+    @Override
+    public void invoke(){
+        Cursa.log.info("Loading GUI Manager");
         guiSetting = (GUI) ModuleManager.getModule(GUI.class);
     }
 

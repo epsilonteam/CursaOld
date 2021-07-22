@@ -2,7 +2,6 @@ package club.eridani.cursa.module.modules.movement;
 
 import club.eridani.cursa.common.annotations.Module;
 import club.eridani.cursa.common.annotations.ParallelLoadable;
-import club.eridani.cursa.common.annotations.TickUpdate;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
 
@@ -10,7 +9,7 @@ import club.eridani.cursa.module.ModuleBase;
 @Module(name = "Sprint", category = Category.MOVEMENT)
 public class Sprint extends ModuleBase {
 
-    @TickUpdate
+    @Override
     public void onParallelTick() {
         if (mc.player == null) return;
         mc.player.setSprinting(!mc.player.collidedHorizontally && mc.player.moveForward > 0);
