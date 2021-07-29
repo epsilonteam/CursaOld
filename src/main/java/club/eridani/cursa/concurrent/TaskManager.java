@@ -4,11 +4,13 @@ import club.eridani.cursa.concurrent.repeat.RepeatManager;
 import club.eridani.cursa.concurrent.repeat.RepeatUnit;
 import club.eridani.cursa.concurrent.task.*;
 import club.eridani.cursa.concurrent.thread.BackgroundMainThread;
+import club.eridani.cursa.concurrent.thread.BlockingContent;
 import club.eridani.cursa.concurrent.utils.Syncer;
 import club.eridani.cursa.tasks.Tasks;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.IntSupplier;
@@ -19,27 +21,39 @@ import java.util.function.IntSupplier;
 public class TaskManager {
 
     //---- Instance Stuff ----//
-    public static TaskManager instance;
+    public static TaskManager instance = new TaskManager();
 
     public static Logger logger = LogManager.getLogger("Concurrent Task Manager");
 
-    public static int workingThreads = 8;
+    public static int workingThreads = Runtime.getRuntime().availableProcessors();
 
     public BackgroundMainThread backgroundMainThread = new BackgroundMainThread();
 
     public final ThreadPoolExecutor executor = new ThreadPoolExecutor(workingThreads, Integer.MAX_VALUE, 1000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
-
-    public static void init() {
-        if (instance == null) instance = new TaskManager();
-    }
 
     TaskManager() {
         RepeatManager.init();
         backgroundMainThread.start();
     }
 
+    public static long runTiming(VoidTask task) {
+        long startTime = System.currentTimeMillis();
+        task.invoke();
+        return System.currentTimeMillis() - startTime;
+    }
+
     //---- TaskPool Runner ----//
-    public static void runBlocking(List<VoidTask> tasks) {
+    public static void runBlocking(BlockingTask task) {
+        BlockingContent content = new BlockingContent();
+        task.invoke(content);
+        content.await();
+    }
+
+    public static void runBlockingTasks(VoidTask... tasks) {
+        runBlockingTasks(Arrays.asList(tasks));
+    }
+
+    public static void runBlockingTasks(List<VoidTask> tasks) {
         Syncer syncer = new Syncer(tasks.size());
         tasks.forEach(it -> instance.executor.execute(new VoidRunnable(it, syncer)));
         syncer.await();

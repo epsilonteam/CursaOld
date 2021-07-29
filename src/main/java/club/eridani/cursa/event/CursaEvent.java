@@ -2,7 +2,7 @@ package club.eridani.cursa.event;
 
 public class CursaEvent {
 
-    private boolean cancelled = false;
+    private volatile boolean cancelled = false;
 
     public boolean isCancelled() {
         return cancelled;
@@ -12,7 +12,7 @@ public class CursaEvent {
         this.cancelled = cancelled;
     }
 
-    public void cancel(){
+    public void cancel() {
         cancelled = true;
     }
 

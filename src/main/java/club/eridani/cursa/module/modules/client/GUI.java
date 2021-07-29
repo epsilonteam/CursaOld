@@ -1,12 +1,12 @@
 package club.eridani.cursa.module.modules.client;
 
 import club.eridani.cursa.common.annotations.Module;
-import club.eridani.cursa.common.annotations.ParallelLoadable;
+import club.eridani.cursa.common.annotations.Parallel;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
 
-@ParallelLoadable
+@Parallel
 @Module(name = "GUI", category = Category.CLIENT)
 public class GUI extends ModuleBase {
 

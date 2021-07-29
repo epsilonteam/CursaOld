@@ -7,12 +7,12 @@ import club.eridani.cursa.event.system.EventManager;
 import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.event.system.impl.annotated.AnnotatedEventManager;
 import club.eridani.cursa.tasks.Tasks;
-import club.eridani.cursa.utils.ListUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.Display;
 
 import static club.eridani.cursa.concurrent.TaskManager.*;
+import static club.eridani.cursa.utils.ListUtil.listOf;
 
 /**
  * The CursaMod's Client Base is under MIT License
@@ -21,7 +21,7 @@ import static club.eridani.cursa.concurrent.TaskManager.*;
 public class Cursa {
 
     public static final String MOD_NAME = "Cursa";
-    public static final String MOD_VERSION = "b2";
+    public static final String MOD_VERSION = "b3";
 
     public static final String AUTHOR = "B_312";
     public static final String GITHUB = "https://github.com/SexyTeam/Cursa";
@@ -29,6 +29,7 @@ public class Cursa {
     public static String CHAT_SUFFIX = "\u1d04\u1d1c\u0280\u0073\u1d00";
 
     public static final Logger log = LogManager.getLogger(MOD_NAME);
+    private static Thread mainThread;
 
     public Cursa() {
         instance = this;
@@ -37,35 +38,38 @@ public class Cursa {
 
     @Listener
     public void preInitialize(InitializationEvent.PreInitialize event) {
-        TaskManager.init();
+        mainThread = Thread.currentThread();
     }
 
     @Listener
     public void initialize(InitializationEvent.Initialize event) {
-        long startTime = System.currentTimeMillis();
-        Display.setTitle(MOD_NAME + " " + MOD_VERSION);
-        FontManager.init();
-        log.info("Loading Module Manager");
-        ModuleManager.init();
 
-        runBlocking(ListUtil.listOf(
-                new GUIManager(),
-                new CommandManager(),
-                new FriendManager(),
-                new ConfigManager()
-        ));
+        long tookTime = runTiming(() -> {
+            Display.setTitle(MOD_NAME + " " + MOD_VERSION);
+            FontManager.init();
+            log.info("Loading Module Manager");
+            //ModuleManager is partial parallel loadable
+            ModuleManager.init();
 
-        repeat(10, () -> {
-
+            //Parallel load managers
+            runBlocking(it -> {
+                it.launch(GUIManager::init);
+                it.launch(CommandManager::init);
+                it.launch(FriendManager::init);
+                it.launch(ConfigManager::init);
+            });
         });
 
-        long tookTime = System.currentTimeMillis() - startTime;
         log.info("Took " + tookTime + "ms to launch Cursa!");
     }
 
     @Listener
     public void postInitialize(InitializationEvent.PostInitialize event) {
         launch(Tasks.LoadConfig);
+    }
+
+    public static boolean isMainThread(Thread thread) {
+        return thread == mainThread;
     }
 
     public static EventManager EVENT_BUS = new AnnotatedEventManager();

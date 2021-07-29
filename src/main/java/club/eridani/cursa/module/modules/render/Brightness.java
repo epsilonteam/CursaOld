@@ -1,7 +1,7 @@
 package club.eridani.cursa.module.modules.render;
 
 import club.eridani.cursa.common.annotations.Module;
-import club.eridani.cursa.common.annotations.ParallelLoadable;
+import club.eridani.cursa.common.annotations.Parallel;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
@@ -9,7 +9,7 @@ import club.eridani.cursa.setting.Setting;
 import java.util.Stack;
 import java.util.function.Function;
 
-@ParallelLoadable
+@Parallel(runnable = true)
 @Module(name = "Brightness", category = Category.RENDER)
 public class Brightness extends ModuleBase {
 
@@ -55,7 +55,7 @@ public class Brightness extends ModuleBase {
     }
 
     @Override
-    public void onParallelTick() {
+    public void onTick() {
         if (inTransition) {
             if (transitionStack.isEmpty()) {
                 inTransition = false;

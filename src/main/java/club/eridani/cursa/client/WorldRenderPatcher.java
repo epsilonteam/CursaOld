@@ -37,7 +37,7 @@ public class WorldRenderPatcher {
         e.resetTranslation();
         Minecraft.getMinecraft().profiler.endSection();
 
-        Cursa.MODULE_BUS.modules.forEach(it -> {
+        Cursa.MODULE_BUS.getModules().forEach(it -> {
             try {
                 it.onRenderWorld(e);
             } catch (Exception exception) {

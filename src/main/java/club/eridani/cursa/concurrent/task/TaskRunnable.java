@@ -84,7 +84,8 @@ public class TaskRunnable<T> extends TaskUnit implements Runnable {
         try {
             if (eventTask != null) eventTask.invoke(eventParameter);
             else if (task != null) task.invoke(parameters);
-        } catch (Exception ignore){
+        } catch (Exception exception) {
+            exception.printStackTrace();
         }
         if (syncer != null) syncer.countDown();
     }

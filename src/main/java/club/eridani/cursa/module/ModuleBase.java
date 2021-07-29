@@ -2,6 +2,7 @@ package club.eridani.cursa.module;
 
 import club.eridani.cursa.Cursa;
 import club.eridani.cursa.common.annotations.Module;
+import club.eridani.cursa.common.annotations.Parallel;
 import club.eridani.cursa.event.events.client.InputUpdateEvent;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.event.events.render.RenderEvent;
@@ -20,6 +21,8 @@ public class ModuleBase {
     public final String name;
     public final Category category;
     public int keyCode;
+    public final Parallel annotation = getClass().getAnnotation(Parallel.class);
+    public final boolean parallelRunnable = annotation != null && annotation.runnable();
 
     boolean enabled = false;
     private final List<Setting<?>> settings = new ArrayList<>();
@@ -46,7 +49,7 @@ public class ModuleBase {
         else enable();
     }
 
-    public void disableAndEnable() {
+    public void reload() {
         if (enabled) {
             enabled = false;
             Cursa.MODULE_BUS.unregister(this);
@@ -85,12 +88,6 @@ public class ModuleBase {
     public void onPacketSend(PacketEvent.Send event) {
     }
 
-    public void onParallelRenderTick() {
-    }
-
-    public void onParallelTick() {
-    }
-
     public void onTick() {
     }
 
@@ -113,6 +110,10 @@ public class ModuleBase {
     }
 
     public void onSettingChange(Setting<?> setting) {
+    }
+
+    public String getHUDInfo() {
+        return "";
     }
 
     public Setting<Boolean> setting(String name, boolean defaultValue) {

@@ -1,20 +1,21 @@
 package club.eridani.cursa.client;
 
 import club.eridani.cursa.Cursa;
-import club.eridani.cursa.common.annotations.ParallelLoadable;
-import club.eridani.cursa.concurrent.task.VoidTask;
+import club.eridani.cursa.common.annotations.Parallel;
 import club.eridani.cursa.event.events.client.KeyEvent;
 import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.utils.ClassUtil;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
+import static club.eridani.cursa.concurrent.TaskManager.launch;
 import static club.eridani.cursa.concurrent.TaskManager.runBlocking;
 
 public class ModuleManager {
 
-    public Map<Class<? extends ModuleBase>, ModuleBase> moduleMap = new HashMap<>();
+    public final Map<Class<? extends ModuleBase>, ModuleBase> moduleMap = new ConcurrentHashMap<>();
     public final List<ModuleBase> moduleList = new ArrayList<>();
 
     private static ModuleManager instance;
@@ -32,8 +33,10 @@ public class ModuleManager {
 
     @Listener
     public void onKey(KeyEvent event) {
-        moduleMap.values().forEach(it -> {
-            if (event.getKey() == it.keyCode) it.toggle();
+        moduleList.forEach(it -> {
+            if (event.getKey() == it.keyCode) {
+                it.toggle();
+            }
         });
     }
 
@@ -58,16 +61,16 @@ public class ModuleManager {
 
     private void loadModules() {
         Set<Class<? extends ModuleBase>> classList = ClassUtil.findClasses(Cursa.class.getPackage().getName(), ModuleBase.class);
-        List<VoidTask> quickLoadList = new ArrayList<>();
         Cursa.log.info("[ModuleManager]Loading modules.");
-        classList.stream().sorted(Comparator.comparing(Class::getSimpleName)).forEach(clazz -> {
+        runBlocking(unit -> classList.stream().sorted(Comparator.comparing(Class::getSimpleName)).forEach(clazz -> {
             try {
-                if (clazz.isAnnotationPresent(ParallelLoadable.class)) {
-                    quickLoadList.add(() -> {
+                if (clazz.isAnnotationPresent(Parallel.class) && clazz.getAnnotation(Parallel.class).loadable()) {
+                    launch(() -> {
                         try {
                             ModuleBase module = clazz.newInstance();
                             synchronized (moduleList) {
                                 moduleList.add(module);
+                                moduleMap.put(clazz, module);
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -78,21 +81,20 @@ public class ModuleManager {
                     ModuleBase module = clazz.newInstance();
                     synchronized (moduleList) {
                         moduleList.add(module);
+                        moduleMap.put(clazz, module);
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
                 System.err.println("Couldn't initiate Module " + clazz.getSimpleName() + "! Error: " + e.getClass().getSimpleName() + ", message: " + e.getMessage());
             }
-        });
-        runBlocking(quickLoadList);
-        sortAndPut();
+        }));
+        sort();
         Cursa.log.info("[ModuleManager]Loaded " + moduleList.size() + " modules");
     }
 
-    private void sortAndPut() {
+    private void sort() {
         moduleList.sort(Comparator.comparing(it -> it.name));
-        moduleList.forEach(it -> moduleMap.put(it.getClass(), it));
     }
 
 

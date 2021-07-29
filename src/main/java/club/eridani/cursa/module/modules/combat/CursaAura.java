@@ -4,7 +4,7 @@ import club.eridani.cursa.client.FontManager;
 import club.eridani.cursa.client.FriendManager;
 import club.eridani.cursa.client.GUIManager;
 import club.eridani.cursa.common.annotations.Module;
-import club.eridani.cursa.common.annotations.ParallelLoadable;
+import club.eridani.cursa.common.annotations.Parallel;
 import club.eridani.cursa.concurrent.repeat.RepeatUnit;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.event.events.render.RenderEvent;
@@ -65,7 +65,7 @@ import static org.lwjgl.opengl.GL11.GL_QUADS;
  * But if you want to distribute your client or modified code
  * You have to public it and credit EridaniTeam
  */
-@ParallelLoadable
+@Parallel(runnable = true)
 @Module(name = "CursaAura", category = Category.COMBAT)
 public strictfp class CursaAura extends ModuleBase {
 
@@ -147,9 +147,7 @@ public strictfp class CursaAura extends ModuleBase {
     RepeatUnit placeCalculation = new RepeatUnit(() -> (int) ((1000 / placeSpeed.getValue()) - 5) / (multiPlace.getValue() ? 1 : 2), () -> {
         if (mc.player == null || mc.world == null) return;
         if (multiPlace.getValue()) localTarget.putPlaceTarget(calculator(shouldIgnoreEntity.get()));
-    }).timeOut(it -> {
-        NotificationManager.error("Can't keep up!The calculation can't catch up with your place speed!");
-    });
+    }).timeOut(it -> NotificationManager.error("Can't keep up!The calculation can't catch up with your place speed!Decrease PlaceSpeed plz!"));
 
     RepeatUnit breakCalculation = new RepeatUnit(() -> (int) ((1000 / attackSpeed.getValue()) - 5), () -> {
         if (mc.player == null || mc.world == null) return;
@@ -157,7 +155,7 @@ public strictfp class CursaAura extends ModuleBase {
                 .filter(e -> e instanceof EntityEnderCrystal && canHitCrystal(e.getPositionVector()))
                 .map(e -> (EntityEnderCrystal) e)
                 .min(Comparator.comparing(e -> mc.player.getDistance(e))).orElse(null));
-    });
+    }).timeOut(it -> NotificationManager.error("Can't keep up!The calculation can't catch up with your attack speed!Decrease BreakSpeed plz!"));
 
     List<RepeatUnit> repeatUnits = new ArrayList<>();
 
@@ -518,7 +516,7 @@ public strictfp class CursaAura extends ModuleBase {
             mc.player.inventory.currentItem = prevSlot;
             mc.playerController.updateController();
         }
-    });
+    }).timeOut(it -> NotificationManager.error("Can't keep up!The calculation can't catch up with your update speed!Increase Thread Delay plz!"));
 
     /**
      * Calculation of target block to place crystal

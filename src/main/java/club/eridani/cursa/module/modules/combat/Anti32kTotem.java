@@ -1,7 +1,7 @@
 package club.eridani.cursa.module.modules.combat;
 
 import club.eridani.cursa.common.annotations.Module;
-import club.eridani.cursa.common.annotations.ParallelLoadable;
+import club.eridani.cursa.common.annotations.Parallel;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
@@ -12,21 +12,21 @@ import net.minecraft.inventory.ClickType;
 /**
  * Created by B_312 on 06/24/19
  */
-@ParallelLoadable
-@Module(name = "Anti32KTotem",category = Category.COMBAT)
+@Parallel(runnable = true)
+@Module(name = "Anti32KTotem", category = Category.COMBAT)
 public class Anti32kTotem extends ModuleBase {
 
-    Setting<Boolean> pauseInInventory = setting("PauseInInventory",false);
+    Setting<Boolean> pauseInInventory = setting("PauseInInventory", false);
 
     @Override
-    public void onParallelTick() {
-		
+    public void onRenderTick() {
+
         if (mc.currentScreen != null) {
             return;
         }
-		if (pauseInInventory.getValue() && mc.currentScreen instanceof GuiContainer){
-			return;
-		}
+        if (pauseInInventory.getValue() && mc.currentScreen instanceof GuiContainer) {
+            return;
+        }
         if (mc.player.inventory.getStackInSlot(0).getItem() == Items.TOTEM_OF_UNDYING) {
             return;
         }

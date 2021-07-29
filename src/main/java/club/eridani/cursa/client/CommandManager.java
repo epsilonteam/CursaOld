@@ -15,15 +15,14 @@ import java.util.Set;
 
 import static club.eridani.cursa.concurrent.TaskManager.launch;
 
-public class CommandManager implements VoidTask {
+public class CommandManager {
 
     public static String cmdPrefix = ".";
     public List<CommandBase> commands = new ArrayList<>();
 
-    @Override
-    public void invoke() {
+    public static void init() {
         Cursa.log.info("Loading Command Manager");
-        instance = this;
+        instance = new CommandManager();
         instance.commands.clear();
         instance.loadCommands();
         Cursa.EVENT_BUS.register(instance);

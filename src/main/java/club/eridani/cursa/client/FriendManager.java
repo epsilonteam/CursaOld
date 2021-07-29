@@ -1,21 +1,17 @@
 package club.eridani.cursa.client;
 
-import club.eridani.cursa.Cursa;
-import club.eridani.cursa.concurrent.task.VoidTask;
 import net.minecraft.entity.Entity;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FriendManager implements VoidTask {
+public class FriendManager {
 
     public List<String> friends = new ArrayList<>();
 
-    @Override
-    public void invoke() {
-        Cursa.log.info("Loading Friend Manager");
-        instance = this;
-        friends.clear();
+    public static void init() {
+        instance = new FriendManager();
+        instance.friends.clear();
     }
 
     public static boolean isFriend(Entity entity) {

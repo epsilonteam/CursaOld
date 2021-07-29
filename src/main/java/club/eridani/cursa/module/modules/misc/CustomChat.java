@@ -2,14 +2,14 @@ package club.eridani.cursa.module.modules.misc;
 
 import club.eridani.cursa.Cursa;
 import club.eridani.cursa.common.annotations.Module;
-import club.eridani.cursa.common.annotations.ParallelLoadable;
+import club.eridani.cursa.common.annotations.Parallel;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
 import net.minecraft.network.play.client.CPacketChatMessage;
 
-@ParallelLoadable
+@Parallel
 @Module(name = "CustomChat", category = Category.MISC)
 public class CustomChat extends ModuleBase {
 

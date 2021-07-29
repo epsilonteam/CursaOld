@@ -24,7 +24,8 @@ public class VoidRunnable extends TaskUnit implements Runnable {
     public void run() {
         try {
             task.invoke();
-        } catch (Exception ignore){
+        } catch (Exception exception) {
+            exception.printStackTrace();
         }
         if (syncer != null) syncer.countDown();
     }

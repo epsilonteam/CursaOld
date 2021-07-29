@@ -1,7 +1,7 @@
 package club.eridani.cursa.module.modules.combat;
 
 import club.eridani.cursa.common.annotations.Module;
-import club.eridani.cursa.common.annotations.ParallelLoadable;
+import club.eridani.cursa.common.annotations.Parallel;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
@@ -16,20 +16,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@ParallelLoadable
-@Module(name = "AutoTotem",category = Category.COMBAT)
+@Parallel(runnable = true)
+@Module(name = "AutoTotem", category = Category.COMBAT)
 public class AutoTotem extends ModuleBase {
 
-    Setting<Boolean> soft = setting("Soft",true);
-    Setting<Boolean> pauseInContainers = setting("PauseInInventory",false);
-    Setting<Boolean> pauseInInventory = setting("PauseInContainer",false);
-	
-	private int numOfTotems;
-    private int preferredTotemSlot;
-	public static Minecraft mc = Minecraft.getMinecraft();
+    Setting<Boolean> soft = setting("Soft", true);
+    Setting<Boolean> pauseInContainers = setting("PauseInInventory", false);
+    Setting<Boolean> pauseInInventory = setting("PauseInContainer", false);
 
-	@Override
-    public void onParallelTick() {
+    private int numOfTotems;
+    private int preferredTotemSlot;
+    public static Minecraft mc = Minecraft.getMinecraft();
+
+    @Override
+    public void onRenderTick() {
 
         if (mc.player == null) {
             return;
@@ -55,11 +55,8 @@ public class AutoTotem extends ModuleBase {
 
             if (!mc.player.getHeldItemOffhand().getItem().equals(Items.TOTEM_OF_UNDYING)) {
 
-                boolean offhandEmptyPreSwitch = false;
+                boolean offhandEmptyPreSwitch = mc.player.getHeldItemOffhand().getItem().equals(Items.AIR);
 
-                if (mc.player.getHeldItemOffhand().getItem().equals(Items.AIR)) {
-                    offhandEmptyPreSwitch = true;
-                }
                 mc.playerController.windowClick(0, preferredTotemSlot, 0, ClickType.PICKUP, mc.player);
                 mc.playerController.windowClick(0, 45, 0, ClickType.PICKUP, mc.player);
 

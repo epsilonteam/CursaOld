@@ -1,8 +1,6 @@
 package club.eridani.cursa.mixin;
 
 import club.eridani.cursa.Cursa;
-import club.eridani.cursa.asm.CursaAccessTransformer;
-import club.eridani.cursa.asm.CursaTransformer;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,9 +29,7 @@ public class MixinLoader implements IFMLLoadingPlugin {
 
     @Override
     public String[] getASMTransformerClass() {
-        return new String[]{
-                CursaTransformer.class.getName()
-        };
+        return new String[0];
     }
 
     @Override
@@ -51,7 +47,7 @@ public class MixinLoader implements IFMLLoadingPlugin {
 
     @Override
     public String getAccessTransformerClass() {
-        return CursaAccessTransformer.class.getName();
+        return null;
     }
 
 }

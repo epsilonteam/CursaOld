@@ -2,6 +2,7 @@ package club.eridani.cursa.mixin.mixins.client;
 
 import club.eridani.cursa.Cursa;
 import club.eridani.cursa.client.ConfigManager;
+import club.eridani.cursa.concurrent.TaskManager;
 import club.eridani.cursa.event.events.client.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -50,7 +51,7 @@ public class MixinMinecraft {
         if (Minecraft.getMinecraft().player != null) Cursa.EVENT_BUS.post(new TickEvent());
     }
 
-    @Inject(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;checkGLError(Ljava/lang/String;)V", ordinal = 0, shift = At.Shift.AFTER))
+    @Inject(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;checkGLError(Ljava/lang/String;)V", ordinal = 0, shift = At.Shift.BEFORE))
     public void onPreInit(CallbackInfo callbackInfo) {
         Cursa.EVENT_BUS.post(new InitializationEvent.PreInitialize());
     }
@@ -76,6 +77,7 @@ public class MixinMinecraft {
     }
 
     private void save() {
+        TaskManager.instance.executor.shutdown();
         System.out.println("Shutting down: saving " + Cursa.MOD_NAME + " configuration");
         ConfigManager.saveAll();
         System.out.println("Configuration saved.");

@@ -1,7 +1,7 @@
 package club.eridani.cursa.module.modules.misc;
 
 import club.eridani.cursa.common.annotations.Module;
-import club.eridani.cursa.common.annotations.ParallelLoadable;
+import club.eridani.cursa.common.annotations.Parallel;
 import club.eridani.cursa.concurrent.repeat.RepeatUnit;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
@@ -17,7 +17,7 @@ import java.util.Random;
 import static club.eridani.cursa.concurrent.TaskManager.runRepeat;
 import static club.eridani.cursa.utils.FileUtil.readTextFileAllLines;
 
-@ParallelLoadable
+@Parallel
 @Module(name = "Spammer", category = Category.MISC)
 public class Spammer extends ModuleBase {
 

@@ -1,5 +1,6 @@
 package club.eridani.cursa.utils;
 
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityAgeable;
@@ -9,6 +10,8 @@ import net.minecraft.entity.passive.EntityAmbientCreature;
 import net.minecraft.entity.passive.EntitySquid;
 import net.minecraft.entity.passive.EntityWolf;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
 public class EntityUtil {
@@ -23,6 +26,36 @@ public class EntityUtil {
         return EntityUtil.getInterpolatedAmount(entity, ticks, ticks, ticks);
     }
 
+    public static boolean isPlayerInHole() {
+        BlockPos blockPos = getLocalPlayerPosFloored();
+
+        IBlockState blockState = mc.world.getBlockState(blockPos);
+
+        if (blockState.getBlock() != Blocks.AIR)
+            return false;
+
+        if (mc.world.getBlockState(blockPos.up()).getBlock() != Blocks.AIR)
+            return false;
+
+        if (mc.world.getBlockState(blockPos.down()).getBlock() == Blocks.AIR)
+            return false;
+
+        final BlockPos[] touchingBlocks = new BlockPos[]
+                {blockPos.north(), blockPos.south(), blockPos.east(), blockPos.west()};
+
+        int validHorizontalBlocks = 0;
+        for (BlockPos touching : touchingBlocks) {
+            final IBlockState touchingState = mc.world.getBlockState(touching);
+            if ((touchingState.getBlock() != Blocks.AIR) && touchingState.isFullBlock())
+                validHorizontalBlocks++;
+        }
+
+        return validHorizontalBlocks >= 4;
+    }
+
+    public static BlockPos getLocalPlayerPosFloored() {
+        return new BlockPos(Math.floor(mc.player.posX), Math.floor(mc.player.posY), Math.floor(mc.player.posZ));
+    }
 
     public static boolean isFakeLocalPlayer(Entity entity) {
         return entity != null && entity.getEntityId() == -100 && mc.player != entity;

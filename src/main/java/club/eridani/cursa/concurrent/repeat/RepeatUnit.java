@@ -4,6 +4,7 @@ import club.eridani.cursa.concurrent.task.EventTask;
 import club.eridani.cursa.concurrent.task.VoidTask;
 import club.eridani.cursa.concurrent.utils.Timer;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.IntSupplier;
 
 /**
@@ -13,8 +14,9 @@ public class RepeatUnit {
 
     VoidTask task;
 
-    private volatile boolean isRunning = true;
-    private volatile boolean isDead = false;
+    private final AtomicBoolean runnable = new AtomicBoolean(true);
+    private final AtomicBoolean isRunning = new AtomicBoolean(true);
+    private final AtomicBoolean isDead = new AtomicBoolean(false);
     public IntSupplier delaySupplier = null;
     public int delay = -1;
     private final Timer timer = new Timer();
@@ -86,9 +88,16 @@ public class RepeatUnit {
             isDelayTask = false;
             return;
         }
-        if (isRunning && !isDead && task != null) {
+        if (!runnable.get()) return;
+        if (isRunning.get() && !isDead.get() && task != null) {
             if (times > 0) {
-                task.invoke();
+                runnable.set(false);
+                try {
+                    task.invoke();
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                }
+                runnable.set(true);
                 if (timeOutOperation != null && timer.passed(getDelay())) {
                     timeOutOperation.invoke();
                     switch (afterTimeOut) {
@@ -98,7 +107,6 @@ public class RepeatUnit {
                         }
                         case STOP: {
                             stop();
-                            break;
                         }
                     }
                 }
@@ -141,26 +149,26 @@ public class RepeatUnit {
     }
 
     public boolean isRunning() {
-        return isRunning;
+        return isRunning.get();
     }
 
     public RepeatUnit suspend() {
-        isRunning = false;
+        isRunning.set(false);
         return this;
     }
 
     public void resume() {
-        isRunning = true;
+        isRunning.set(true);
     }
 
-    public void stop() {
-        isDead = true;
+    public synchronized void stop() {
+        isDead.set(true);
         task = null;
-        isRunning = false;
+        isRunning.set(false);
     }
 
-    public synchronized boolean isDead() {
-        return isDead;
+    public boolean isDead() {
+        return isDead.get();
     }
 
 }

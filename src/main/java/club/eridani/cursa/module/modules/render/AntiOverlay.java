@@ -1,7 +1,7 @@
 package club.eridani.cursa.module.modules.render;
 
 import club.eridani.cursa.common.annotations.Module;
-import club.eridani.cursa.common.annotations.ParallelLoadable;
+import club.eridani.cursa.common.annotations.Parallel;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
@@ -13,7 +13,7 @@ import net.minecraft.network.play.server.SPacketSpawnExperienceOrb;
 import net.minecraft.network.play.server.SPacketSpawnMob;
 import net.minecraft.network.play.server.SPacketSpawnPainting;
 
-@ParallelLoadable
+@Parallel(runnable = true)
 @Module(name = "AntiOverlay", category = Category.RENDER)
 public class AntiOverlay extends ModuleBase {
 
@@ -25,7 +25,7 @@ public class AntiOverlay extends ModuleBase {
     Setting<Boolean> paint = setting("Paintings", false);
 
     @Override
-    public void onParallelTick() {
+    public void onTick() {
         if (mc.player == null) return;
         if (blindness.getValue()) {
             mc.player.removeActivePotionEffect(MobEffects.BLINDNESS);

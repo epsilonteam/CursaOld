@@ -1,7 +1,7 @@
 package club.eridani.cursa.module.modules.movement;
 
 import club.eridani.cursa.common.annotations.Module;
-import club.eridani.cursa.common.annotations.ParallelLoadable;
+import club.eridani.cursa.common.annotations.Parallel;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
@@ -15,25 +15,25 @@ import net.minecraft.network.play.server.SPacketExplosion;
 
 import javax.annotation.Nullable;
 
-@ParallelLoadable
-@Module(name = "Velocity",category = Category.MOVEMENT)
+@Parallel
+@Module(name = "Velocity", category = Category.MOVEMENT)
 public class Velocity extends ModuleBase {
 
-    Setting<Integer> horizontal_vel = setting("Horizontal",0,0,100);
-    Setting<Integer> vertical_vel = setting("Vertical",0,0,100);
-    Setting<Boolean> explosions = setting("Explosions",true);
-    Setting<Boolean> bobbers = setting("Bobbers",true);
+    Setting<Integer> horizontal_vel = setting("Horizontal", 0, 0, 100);
+    Setting<Integer> vertical_vel = setting("Vertical", 0, 0, 100);
+    Setting<Boolean> explosions = setting("Explosions", true);
+    Setting<Boolean> bobbers = setting("Bobbers", true);
 
     public final Minecraft mc = Minecraft.getMinecraft();
 
     @Override
     public void onPacketReceive(PacketEvent.Receive event) {
-        if(mc.player == null) return;
+        if (mc.player == null) return;
         if (event.packet instanceof SPacketEntityStatus && this.bobbers.getValue()) {
             final SPacketEntityStatus packet = (SPacketEntityStatus) event.packet;
             if (packet.getOpCode() == 31) {
                 @Nullable final Entity entity = packet.getEntity(mc.world);
-                if(entity != null) {
+                if (entity != null) {
                     if (entity instanceof EntityFishHook) {
                         final EntityFishHook fishHook = (EntityFishHook) entity;
                         if (fishHook.caughtEntity == mc.player) {
