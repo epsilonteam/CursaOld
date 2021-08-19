@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class TaskRunnable<T> extends TaskUnit implements Runnable {
 
-    private final Task<T> task;
+    private final MultiParameterTask<T> task;
     private final List<T> parameters = new ArrayList<>();
 
     private EventTask<T> eventTask = null;
@@ -45,35 +45,35 @@ public class TaskRunnable<T> extends TaskUnit implements Runnable {
         this.syncer = null;
     }
 
-    public TaskRunnable(Task<T> task) {
+    public TaskRunnable(MultiParameterTask<T> task) {
         this.task = task;
         this.syncer = null;
     }
 
-    public TaskRunnable(Task<T> task, Syncer syncer) {
+    public TaskRunnable(MultiParameterTask<T> task, Syncer syncer) {
         this.task = task;
         this.syncer = syncer;
     }
 
-    public TaskRunnable(T parameter, Task<T> task) {
+    public TaskRunnable(T parameter, MultiParameterTask<T> task) {
         this.task = task;
         this.syncer = null;
         this.parameters.add(parameter);
     }
 
-    public TaskRunnable(Task<T> task, Syncer syncer, T parameter) {
+    public TaskRunnable(MultiParameterTask<T> task, Syncer syncer, T parameter) {
         this.task = task;
         this.syncer = syncer;
         this.parameters.add(parameter);
     }
 
-    public TaskRunnable(T[] parameters, Task<T> task) {
+    public TaskRunnable(T[] parameters, MultiParameterTask<T> task) {
         this.task = task;
         this.syncer = null;
         this.parameters.addAll(Arrays.asList(parameters));
     }
 
-    public TaskRunnable(Task<T> task, Syncer syncer, T[] parameters) {
+    public TaskRunnable(MultiParameterTask<T> task, Syncer syncer, T[] parameters) {
         this.task = task;
         this.syncer = syncer;
         this.parameters.addAll(Arrays.asList(parameters));

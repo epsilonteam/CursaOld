@@ -2,8 +2,9 @@ package club.eridani.cursa.client;
 
 import club.eridani.cursa.Cursa;
 import club.eridani.cursa.common.annotations.Parallel;
+import club.eridani.cursa.concurrent.event.Listener;
+import club.eridani.cursa.concurrent.event.Priority;
 import club.eridani.cursa.event.events.client.KeyEvent;
-import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.utils.ClassUtil;
 
@@ -31,7 +32,7 @@ public class ModuleManager {
         Cursa.EVENT_BUS.register(instance);
     }
 
-    @Listener
+    @Listener(priority = Priority.HIGHEST)
     public void onKey(KeyEvent event) {
         moduleList.forEach(it -> {
             if (event.getKey() == it.keyCode) {

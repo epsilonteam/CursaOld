@@ -67,8 +67,8 @@ public class OffHandCrystal extends ModuleBase {
 
         Item item = null;
 
-        if (!mc.player.getHeldItemOffhand().isEmpty) {
-            item = mc.player.getHeldItemOffhand().item;
+        if (!mc.player.getHeldItemOffhand().isEmpty()) {
+            item = mc.player.getHeldItemOffhand().getItem();
         }
 
         if (item != null) {
@@ -83,7 +83,7 @@ public class OffHandCrystal extends ModuleBase {
             count = 0;
         }
 
-        Item handItem = mc.player.getHeldItemMainhand().item;
+        Item handItem = mc.player.getHeldItemMainhand().getItem();
         Item offhandItem = mode.getValue().equals("Crystal") ? Items.END_CRYSTAL : Items.GOLDEN_APPLE;
         Item sOffhandItem = mode.getValue().equals("Crystal") ? Items.GOLDEN_APPLE : Items.END_CRYSTAL;
 

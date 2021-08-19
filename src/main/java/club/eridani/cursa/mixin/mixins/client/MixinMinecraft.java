@@ -27,8 +27,8 @@ public class MixinMinecraft {
         }
     }
 
-    @Inject(method = "runGameLoop",at = @At("HEAD"))
-    public void runGameLoop(CallbackInfo ci){
+    @Inject(method = "runGameLoop", at = @At("HEAD"))
+    public void runGameLoop(CallbackInfo ci) {
         Cursa.EVENT_BUS.post(new GameLoopEvent());
     }
 
@@ -42,13 +42,18 @@ public class MixinMinecraft {
         char ch = Keyboard.getEventCharacter();
 
         //Prevent from toggling all modules,when switching languages.
-        if(key != Keyboard.KEY_NONE)
+        if (key != Keyboard.KEY_NONE)
             Cursa.EVENT_BUS.post(down ? new KeyEvent(key, ch) : new InputUpdateEvent(key, ch));
     }
 
     @Inject(method = "runTick", at = @At("RETURN"))
     public void onTick(CallbackInfo ci) {
         if (Minecraft.getMinecraft().player != null) Cursa.EVENT_BUS.post(new TickEvent());
+    }
+
+    @Inject(method = "init", at = @At("HEAD"))
+    public void onInitMinecraft(CallbackInfo ci) {
+        Cursa.getInstance();
     }
 
     @Inject(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;checkGLError(Ljava/lang/String;)V", ordinal = 0, shift = At.Shift.BEFORE))
@@ -77,7 +82,6 @@ public class MixinMinecraft {
     }
 
     private void save() {
-        TaskManager.instance.executor.shutdown();
         System.out.println("Shutting down: saving " + Cursa.MOD_NAME + " configuration");
         ConfigManager.saveAll();
         System.out.println("Configuration saved.");

@@ -17,8 +17,10 @@ public class RepeatManager {
     }
 
     public final List<RepeatUnit> repeatUnits = new CopyOnWriteArrayList<>();
+    public final List<DelayUnit> delayUnits = new CopyOnWriteArrayList<>();
 
     public static void update() {
+        instance.delayUnits.removeIf(DelayUnit::invoke);
         instance.repeatUnits.removeIf(RepeatUnit::isDead);
         instance.repeatUnits.forEach(it -> {
             if (it.shouldRun()) {

@@ -1,21 +1,24 @@
-package club.eridani.cursa.module.modules.combat;
+package club.eridani.cursa.module.modules.combat.CursaAura;
 
 import club.eridani.cursa.client.FontManager;
 import club.eridani.cursa.client.FriendManager;
 import club.eridani.cursa.client.GUIManager;
 import club.eridani.cursa.common.annotations.Module;
 import club.eridani.cursa.common.annotations.Parallel;
+import club.eridani.cursa.concurrent.event.Listener;
+import club.eridani.cursa.concurrent.event.Priority;
 import club.eridani.cursa.concurrent.repeat.RepeatUnit;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.event.events.render.RenderEvent;
 import club.eridani.cursa.event.events.render.RenderModelEvent;
-import club.eridani.cursa.event.system.Listener;
+import club.eridani.cursa.mixin.mixins.accessor.AccessorCPacketPlayer;
+import club.eridani.cursa.mixin.mixins.accessor.AccessorCPacketUseEntity;
+import club.eridani.cursa.mixin.mixins.accessor.AccessorMinecraft;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.notification.NotificationManager;
 import club.eridani.cursa.setting.Setting;
 import club.eridani.cursa.utils.*;
-import club.eridani.cursa.utils.math.Pair;
 import net.minecraft.block.Block;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.GlStateManager;
@@ -45,7 +48,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -141,7 +143,7 @@ public strictfp class CursaAura extends ModuleBase {
 
     transient AtomicInteger lastEntityId = new AtomicInteger(-1);
 
-    private final LocalTarget localTarget = new LocalTarget();
+    public final LocalTarget localTarget = new LocalTarget();
     private final HashMap<BlockPos, Double> renderBlockDmg = new HashMap<>();
 
     RepeatUnit placeCalculation = new RepeatUnit(() -> (int) ((1000 / placeSpeed.getValue()) - 5) / (multiPlace.getValue() ? 1 : 2), () -> {
@@ -151,7 +153,8 @@ public strictfp class CursaAura extends ModuleBase {
 
     RepeatUnit breakCalculation = new RepeatUnit(() -> (int) ((1000 / attackSpeed.getValue()) - 5), () -> {
         if (mc.player == null || mc.world == null) return;
-        localTarget.putAttackTarget(new ArrayList<>(mc.world.loadedEntityList).stream()
+        localTarget.putAttackTarget(new ArrayList<>(mc.world.loadedEntityList)
+                .stream()
                 .filter(e -> e instanceof EntityEnderCrystal && canHitCrystal(e.getPositionVector()))
                 .map(e -> (EntityEnderCrystal) e)
                 .min(Comparator.comparing(e -> mc.player.getDistance(e))).orElse(null));
@@ -174,7 +177,7 @@ public strictfp class CursaAura extends ModuleBase {
     public void onPacketReceive(PacketEvent.Receive event) {
         if (mc.player == null || mc.world == null) return;
         if (clearClickDelay.getValue() && mc.player.getHeldItemMainhand().getItem() == Items.END_CRYSTAL || mc.player.getHeldItemOffhand().getItem() == Items.END_CRYSTAL) {
-            mc.rightClickDelayTimer = 0;
+            ((AccessorMinecraft) mc).setRightClickDelayTimer(0);
         }
         if (event.packet instanceof SPacketSoundEffect) {
             SPacketSoundEffect packet = (SPacketSoundEffect) event.packet;
@@ -204,14 +207,22 @@ public strictfp class CursaAura extends ModuleBase {
             return;
         if (!canHitCrystal(pos)) return;
         CPacketUseEntity attackPacket = new CPacketUseEntity();
-        attackPacket.entityId = packet.getEntityID();
-        attackPacket.action = CPacketUseEntity.Action.ATTACK;
+        setEntityId(attackPacket, packet.getEntityID());
+        setAction(attackPacket, CPacketUseEntity.Action.ATTACK);
         mc.player.connection.sendPacket(attackPacket);
         if (rotate.getValue()) lookAt(pos);
         packetBreakTimer.reset();
     }
 
-    @Listener
+    public static void setAction(CPacketUseEntity packet, CPacketUseEntity.Action action) {
+        ((AccessorCPacketUseEntity) packet).setAction(action);
+    }
+
+    public static void setEntityId(CPacketUseEntity packet, int entityId) {
+        ((AccessorCPacketUseEntity) packet).setId(entityId);
+    }
+
+    @Listener(priority = Priority.HIGH, parallel = true)
     public void renderModelRotation(RenderModelEvent event) {
         if (!rotate.getValue()) return;
         if (rotating) {
@@ -229,8 +240,8 @@ public strictfp class CursaAura extends ModuleBase {
         if (event.packet instanceof CPacketPlayer) {
             CPacketPlayer packet = (CPacketPlayer) event.packet;
             if (shouldSpoofPacket) {
-                packet.yaw = yaw;
-                packet.pitch = pitch;
+                ((AccessorCPacketPlayer) packet).setYaw(yaw);
+                ((AccessorCPacketPlayer) packet).setPitch(pitch);
                 shouldSpoofPacket = false;
             }
         }
@@ -312,8 +323,8 @@ public strictfp class CursaAura extends ModuleBase {
                 repeat(predictExplodeCount.getValue(), () -> {
                     if (syncedId != -1) {
                         CPacketUseEntity attackPacket = new CPacketUseEntity();
-                        attackPacket.entityId = syncedId + count.getAndIncrement() + 1;
-                        attackPacket.action = CPacketUseEntity.Action.ATTACK;
+                        setEntityId(attackPacket, syncedId + count.getAndIncrement() + 1);
+                        setAction(attackPacket, CPacketUseEntity.Action.ATTACK);
                         mc.player.connection.sendPacket(attackPacket);
                     }
                 });
@@ -331,11 +342,11 @@ public strictfp class CursaAura extends ModuleBase {
     }
 
     private List<BlockPos> findCrystalBlocks(double range) {
-        NonNullList<BlockPos> positions = NonNullList.create();
-        positions.addAll(BlockInteractionHelper.getSphere(getPlayerPos(), (float) range, (int) range, false, true, 0)
+        NonNullList<BlockPos> newList = NonNullList.create();
+        newList.addAll(BlockInteractionHelper.getSphere(getPlayerPos(), (float) range, (int) range, false, true, 0)
                 .stream()
-                .filter(v -> canPlaceCrystal(v, oneThirtyPlace.getValue())).collect(Collectors.toList()));
-        return positions;
+                .filter(it -> canPlaceCrystal(it, oneThirtyPlace.getValue())).collect(Collectors.toList()));
+        return newList;
     }
 
     private void drawBlock(BlockPos blockPos, int color) {
@@ -391,8 +402,8 @@ public strictfp class CursaAura extends ModuleBase {
         if (!newPlace && b2 != Blocks.AIR) return false;
 
         AxisAlignedBB box = new AxisAlignedBB(
-                blockPos.x, blockPos.y + 1.0, blockPos.z,
-                blockPos.x + 1.0, blockPos.y + 3.0, blockPos.z + 1.0
+                blockPos.getX(), blockPos.getY() + 1.0, blockPos.getZ(),
+                blockPos.getX() + 1.0, blockPos.getY() + 3.0, blockPos.getZ() + 1.0
         );
 
         List<Entity> entities = new ArrayList<>(mc.world.loadedEntityList);
@@ -522,7 +533,7 @@ public strictfp class CursaAura extends ModuleBase {
      * Calculation of target block to place crystal
      * return a target contains coordinate and target entity.
      */
-    private CrystalTarget calculator(boolean ignoredEntity) {
+    public CrystalTarget calculator(boolean ignoredEntity) {
         double damage = 0.5;
         BlockPos tempBlock = null;
         Entity target = null;
@@ -626,63 +637,6 @@ public strictfp class CursaAura extends ModuleBase {
         target = null;
         yaw = mc.player.rotationYaw;
         pitch = mc.player.rotationPitch;
-    }
-
-    private static class CrystalTarget {
-        public BlockPos blockPos;
-        public Entity target;
-        public boolean ignoredEntity;
-
-        public CrystalTarget(BlockPos block, Entity target, boolean ignoredEntity) {
-            this.blockPos = block;
-            this.target = target;
-            this.ignoredEntity = ignoredEntity;
-        }
-    }
-
-    public static class LocalTarget {
-        final LinkedBlockingDeque<Pair<EntityEnderCrystal, Timer>> attackTargets = new LinkedBlockingDeque<>();
-        final LinkedBlockingDeque<Pair<CrystalTarget, Timer>> placeTargets = new LinkedBlockingDeque<>();
-
-        public synchronized void checkAll(int placeDelay, int attackDelay) {
-            synchronized (attackTargets) {
-                synchronized (placeTargets) {
-                    attackTargets.removeIf(it -> it.b.passed(attackDelay));
-                    placeTargets.removeIf(it -> it.b.passed(placeDelay));
-                }
-            }
-        }
-
-        public synchronized void putAttackTarget(EntityEnderCrystal attackTarget) {
-            synchronized (attackTargets) {
-                attackTargets.add(new Pair<>(attackTarget, new Timer().reset()));
-            }
-        }
-
-        public synchronized EntityEnderCrystal getAttackTarget() {
-            synchronized (attackTargets) {
-                Pair<EntityEnderCrystal, Timer> pair = attackTargets.pollLast();
-                return pair == null ? null : pair.a;
-            }
-        }
-
-        public synchronized void putPlaceTarget(CrystalTarget placeTarget) {
-            synchronized (placeTargets) {
-                placeTargets.add(new Pair<>(placeTarget, new Timer().reset()));
-            }
-        }
-
-        public synchronized CrystalTarget getPlaceTarget(boolean shouldIgnoreEntity) {
-            synchronized (placeTargets) {
-                while (true) {
-                    Pair<CrystalTarget, Timer> pair = placeTargets.pollLast();
-                    if (pair == null) break;
-                    if (pair.a.ignoredEntity == shouldIgnoreEntity) return pair.a;
-                }
-                return CursaAura.INSTANCE.calculator(CursaAura.INSTANCE.shouldIgnoreEntity.get());
-            }
-        }
-
     }
 
 }

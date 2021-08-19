@@ -2,9 +2,9 @@ package club.eridani.cursa.client;
 
 import club.eridani.cursa.Cursa;
 import club.eridani.cursa.command.CommandBase;
-import club.eridani.cursa.concurrent.task.VoidTask;
+import club.eridani.cursa.concurrent.event.Listener;
+import club.eridani.cursa.concurrent.event.Priority;
 import club.eridani.cursa.event.events.client.ChatEvent;
-import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.utils.ChatUtil;
 import club.eridani.cursa.utils.ClassUtil;
 
@@ -41,7 +41,7 @@ public class CommandManager {
         });
     }
 
-    @Listener
+    @Listener(priority = Priority.HIGHEST)
     public void onChat(ChatEvent event) {
         if (event.getMessage().startsWith(cmdPrefix)) {
             launch(() -> runCommands(event.getMessage()));

@@ -1,6 +1,5 @@
 package club.eridani.cursa.mixin;
 
-import club.eridani.cursa.Cursa;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,7 +18,6 @@ public class MixinLoader implements IFMLLoadingPlugin {
     public static final Logger log = LogManager.getLogger("MIXIN");
 
     public MixinLoader() {
-        Cursa.getInstance();
         log.info("Cursa mixins initialized");
         MixinBootstrap.init();
         Mixins.addConfigurations("mixins.cursa.json");

@@ -5,6 +5,7 @@ import club.eridani.cursa.client.GUIManager;
 import club.eridani.cursa.common.annotations.Module;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.event.events.render.RenderEvent;
+import club.eridani.cursa.mixin.mixins.accessor.AccessorCPacketPlayer;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
@@ -152,8 +153,8 @@ public class AutoCrystal extends ModuleBase {
             if (event.packet instanceof CPacketPlayer) {
                 CPacketPlayer packet = (CPacketPlayer) event.getPacket();
                 if (isSpoofingAngles) {
-                    (packet).yaw = yaw;
-                    (packet).pitch = pitch;
+                    ((AccessorCPacketPlayer) packet).setYaw(yaw);
+                    ((AccessorCPacketPlayer) packet).setPitch(pitch);
                 }
             }
         }
@@ -238,18 +239,18 @@ public class AutoCrystal extends ModuleBase {
     public BlockPos calculateTargetPlace(List<BlockPos> crystalBlocks, List<EntityPlayer> players) {
         double maxDamage = 0.5;
         BlockPos targetBlock = null;
-        for (Entity it : players) {
+        for (EntityLivingBase it : players) {
             if (it != mc.player) {
-                if (((EntityLivingBase) it).getHealth() <= 0.0f) continue;
+                if (it.getHealth() <= 0.0f) continue;
                 for (BlockPos blockPos : crystalBlocks) {
                     if (it.getDistanceSq(blockPos) >= distance.getValue() * distance.getValue()) continue;
                     if (mc.player.getDistance(blockPos.getX(), blockPos.getY(), blockPos.getZ()) > placeRange.getValue())
                         continue;
                     double targetDamage = calculateDamage(blockPos.getX() + 0.5, blockPos.getY() + 1, blockPos.getZ() + 0.5, it);
                     if (targetDamage < maxDamage) continue;
-                    if (targetDamage < (facePlace.getValue() ? (canFacePlace((EntityLivingBase) it, blastHealth.getValue()) ? 1 : placeMinDmg.getValue()) : placeMinDmg.getValue()))
+                    if (targetDamage < (facePlace.getValue() ? (canFacePlace(it, blastHealth.getValue()) ? 1 : placeMinDmg.getValue()) : placeMinDmg.getValue()))
                         continue;
-                    float healthTarget = ((EntityLivingBase) it).getHealth() + ((EntityLivingBase) it).getAbsorptionAmount();
+                    float healthTarget = it.getHealth() + it.getAbsorptionAmount();
                     float healthSelf = mc.player.getHealth() + mc.player.getAbsorptionAmount();
                     double selfDamage = calculateDamage(blockPos.getX() + 0.5, blockPos.getY() + 1, blockPos.getZ() + 0.5, mc.player);
                     if (selfDamage > targetDamage && targetDamage < healthTarget) continue;
@@ -302,7 +303,7 @@ public class AutoCrystal extends ModuleBase {
             return;
         }
         if (isOffhand || mc.player.getHeldItemMainhand().getItem() == Items.END_CRYSTAL) {
-            lookAtPacket(blockPos.x + 0.5, blockPos.y - 0.5, blockPos.z + 0.5, mc.player);
+            lookAtPacket(blockPos.getX() + 0.5, blockPos.getY() - 0.5, blockPos.getZ() + 0.5, mc.player);
             mc.player.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(blockPos, EnumFacing.UP, enumHand, 0, 0, 0));
         }
         placements++;

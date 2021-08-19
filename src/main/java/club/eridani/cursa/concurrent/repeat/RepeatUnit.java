@@ -22,7 +22,6 @@ public class RepeatUnit {
     private final Timer timer = new Timer();
     private VoidTask timeOutOperation = null;
     private int times = 0;
-    private boolean isDelayTask = false;
     private AfterTimeOutOperation afterTimeOut = AfterTimeOutOperation.NONE;
 
     public enum AfterTimeOutOperation {
@@ -41,13 +40,6 @@ public class RepeatUnit {
         this.task = task;
         this.delay = delay;
         this.times += times;
-    }
-
-    public RepeatUnit(int delay, int times, boolean isDelayTask, VoidTask task) {
-        this.task = task;
-        this.delay = delay;
-        this.times += times;
-        this.isDelayTask = isDelayTask;
     }
 
     public RepeatUnit(IntSupplier delay, VoidTask task) {
@@ -84,10 +76,6 @@ public class RepeatUnit {
     }
 
     public void run() {
-        if (isDelayTask) {
-            isDelayTask = false;
-            return;
-        }
         if (!runnable.get()) return;
         if (isRunning.get() && !isDead.get() && task != null) {
             if (times > 0) {

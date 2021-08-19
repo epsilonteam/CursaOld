@@ -1,13 +1,14 @@
 package club.eridani.cursa.client;
 
 import club.eridani.cursa.Cursa;
+import club.eridani.cursa.concurrent.event.Listener;
+import club.eridani.cursa.concurrent.event.Priority;
 import club.eridani.cursa.event.events.client.InputUpdateEvent;
 import club.eridani.cursa.event.events.client.SettingUpdateEvent;
 import club.eridani.cursa.event.events.client.TickEvent;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.event.events.render.RenderOverlayEvent;
 import club.eridani.cursa.event.events.render.RenderWorldEvent;
-import club.eridani.cursa.event.system.Listener;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.notification.NotificationManager;
 
@@ -15,7 +16,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static club.eridani.cursa.concurrent.TaskManager.runBlocking;
-
 
 public class ModuleBus {
 
@@ -43,12 +43,12 @@ public class ModuleBus {
         return modules;
     }
 
-    @Listener
+    @Listener(priority = Priority.HIGHEST)
     public void onKey(InputUpdateEvent event) {
         modules.forEach(mod -> mod.onInputUpdate(event));
     }
 
-    @Listener
+    @Listener(priority = Priority.HIGHEST)
     public void onTick(TickEvent event) {
         runBlocking(it -> modules.forEach(module -> {
             if (module.parallelRunnable) {
@@ -71,7 +71,7 @@ public class ModuleBus {
         }));
     }
 
-    @Listener
+    @Listener(priority = Priority.HIGHEST)
     public void onRenderTick(RenderOverlayEvent event) {
         runBlocking(it -> modules.forEach(module -> {
             try {
@@ -100,14 +100,14 @@ public class ModuleBus {
         }));
     }
 
-    @Listener
+    @Listener(priority = Priority.HIGHEST)
     public void onRenderWorld(RenderWorldEvent event) {
         WorldRenderPatcher.INSTANCE.patch(event);
     }
 
-    @Listener
+    @Listener(priority = Priority.HIGHEST)
     public void onPacketSend(PacketEvent.Send event) {
-        modules.forEach(module ->{
+        modules.forEach(module -> {
             try {
                 module.onPacketSend(event);
             } catch (Exception exception) {
@@ -117,19 +117,20 @@ public class ModuleBus {
         });
     }
 
-    @Listener
+    @Listener(priority = Priority.HIGHEST)
     public void onPacketReceive(PacketEvent.Receive event) {
-       modules.forEach(module ->{
-           try {
-               module.onPacketReceive(event);
-           } catch (Exception exception) {
-               NotificationManager.fatal("Error while running PacketReceive!");
-               exception.printStackTrace();
-           }
-       });
+        modules.forEach(module -> {
+            try {
+                module.onPacketReceive(event);
+            } catch (Exception exception) {
+                NotificationManager.fatal("Error while running PacketReceive!");
+                exception.printStackTrace();
+            }
+        });
     }
 
-    @Listener
+
+    @Listener(priority = Priority.HIGHEST)
     public void onSettingChange(SettingUpdateEvent event) {
         modules.forEach(it -> {
             try {

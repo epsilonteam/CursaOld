@@ -12,6 +12,12 @@ import org.lwjgl.input.Keyboard;
 @Module(name = "ClickGUI", category = Category.CLIENT, keyCode = Keyboard.KEY_O)
 public class ClickGUI extends ModuleBase {
 
+    public static ClickGUI instance;
+
+    public ClickGUI() {
+        instance = this;
+    }
+
     @Override
     public void onEnable() {
         if (mc.player != null) {

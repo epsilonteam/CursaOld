@@ -1,5 +1,6 @@
 package club.eridani.cursa.concurrent;
 
+import club.eridani.cursa.concurrent.repeat.DelayUnit;
 import club.eridani.cursa.concurrent.repeat.RepeatManager;
 import club.eridani.cursa.concurrent.repeat.RepeatUnit;
 import club.eridani.cursa.concurrent.task.*;
@@ -59,7 +60,7 @@ public class TaskManager {
         syncer.await();
     }
 
-    public static <T> void runParameterBlocking(List<Task<T>> tasks, T[] parameters) {
+    public static <T> void runParameterBlocking(List<MultiParameterTask<T>> tasks, T[] parameters) {
         Syncer syncer = new Syncer(tasks.size());
         tasks.forEach(it -> instance.executor.execute(new TaskRunnable<>(it, syncer, parameters)));
         syncer.await();
@@ -81,11 +82,11 @@ public class TaskManager {
         instance.executor.execute(new TaskRunnable<>(parameter, task));
     }
 
-    public static <T> void launch(Syncer syncer, T[] parameters, Task<T> task) {
+    public static <T> void launch(Syncer syncer, T[] parameters, MultiParameterTask<T> task) {
         instance.executor.execute(new TaskRunnable<>(task, syncer, parameters));
     }
 
-    public static <T> void launch(T[] parameters, Task<T> task) {
+    public static <T> void launch(T[] parameters, MultiParameterTask<T> task) {
         instance.executor.execute(new TaskRunnable<>(parameters, task));
     }
 
@@ -94,16 +95,12 @@ public class TaskManager {
     }
 
     //---- Delay Runner ----//
-    public static <T> void addDelayTask(int delay, T parameter, EventTask<T> task) {
-        runRepeat(delay, 1, true, () -> launch(parameter, task));
-    }
-
-    public static <T> void addDelayTask(int delay, T[] parameters, Task<T> task) {
-        runRepeat(delay, 1, true, () -> launch(parameters, task));
-    }
-
     public static void addDelayTask(int delay, VoidTask task) {
-        runRepeat(delay, 1, true, () -> launch(task));
+        RepeatManager.instance.delayUnits.add(new DelayUnit(task, System.currentTimeMillis() + delay));
+    }
+
+    public static void addDelayTask(DelayUnit delayUnit) {
+        RepeatManager.instance.delayUnits.add(delayUnit);
     }
 
     //---- Repeat Runner ----//
@@ -118,11 +115,6 @@ public class TaskManager {
 
     public static void runRepeat(int delay, int times, VoidTask task) {
         RepeatUnit unit = new RepeatUnit(delay, times, task);
-        registerRepeatUnit(unit);
-    }
-
-    public static void runRepeat(int delay, int times, boolean isDelayTask, VoidTask task) {
-        RepeatUnit unit = new RepeatUnit(delay, times, isDelayTask, task);
         registerRepeatUnit(unit);
     }
 
@@ -147,6 +139,14 @@ public class TaskManager {
     public static void repeat(int times, VoidTask task) {
         for (int i = 0; i < times; i++) {
             task.invoke();
+        }
+    }
+
+    public void stop() {
+        try {
+            executor.shutdown();
+        } catch (Exception ignore) {
+            logger.info("TaskManager shut down!");
         }
     }
 

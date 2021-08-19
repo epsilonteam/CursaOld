@@ -1,5 +1,6 @@
 package club.eridani.cursa.utils;
 
+import club.eridani.cursa.mixin.mixins.accessor.AccessorRenderManager;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
@@ -145,11 +146,12 @@ public class CrystalUtil {
 
     public static void glBillboard(float x, float y, float z) {
         float scale = 0.016666668f * 1.6f;
-        GlStateManager.translate(x - Minecraft.getMinecraft().getRenderManager().renderPosX, y - Minecraft.getMinecraft().getRenderManager().renderPosY,
-                z - Minecraft.getMinecraft().getRenderManager().renderPosZ);
+        GlStateManager.translate(x - ((AccessorRenderManager) Minecraft.getMinecraft().getRenderManager()).getRenderPosX(), y - ((AccessorRenderManager) Minecraft.getMinecraft().getRenderManager()).getRenderPosY(),
+                z - ((AccessorRenderManager) Minecraft.getMinecraft().getRenderManager()).getRenderPosZ());
         GlStateManager.glNormal3f(0.0f, 1.0f, 0.0f);
         GlStateManager.rotate(-Minecraft.getMinecraft().player.rotationYaw, 0.0f, 1.0f, 0.0f);
         GlStateManager.rotate(Minecraft.getMinecraft().player.rotationPitch, Minecraft.getMinecraft().gameSettings.thirdPersonView == 2 ? -1.0f : 1.0f, 0.0f, 0.0f);
         GlStateManager.scale(-scale, -scale, scale);
     }
+
 }

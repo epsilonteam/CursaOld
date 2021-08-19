@@ -3,6 +3,8 @@ package club.eridani.cursa.module.modules.movement;
 import club.eridani.cursa.common.annotations.Module;
 import club.eridani.cursa.common.annotations.Parallel;
 import club.eridani.cursa.event.events.network.PacketEvent;
+import club.eridani.cursa.mixin.mixins.accessor.AccessorSPacketEntityVelocity;
+import club.eridani.cursa.mixin.mixins.accessor.AccessorSPacketExplosion;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
@@ -52,12 +54,12 @@ public class Velocity extends ModuleBase {
                 }
 
                 if (this.horizontal_vel.getValue() != 100) {
-                    packet.motionX = packet.motionX / 100 * this.horizontal_vel.getValue();
-                    packet.motionZ = packet.motionZ / 100 * this.horizontal_vel.getValue();
+                    ((AccessorSPacketEntityVelocity) packet).setMotionX(packet.getMotionX() / 100 * this.horizontal_vel.getValue());
+                    ((AccessorSPacketEntityVelocity) packet).setMotionZ(packet.getMotionZ() / 100 * this.horizontal_vel.getValue());
                 }
 
                 if (this.vertical_vel.getValue() != 100) {
-                    packet.motionY = packet.motionY / 100 * this.vertical_vel.getValue();
+                    ((AccessorSPacketEntityVelocity) packet).setMotionY(packet.getMotionY() / 100 * this.vertical_vel.getValue());
                 }
             }
         }
@@ -70,12 +72,12 @@ public class Velocity extends ModuleBase {
             }
 
             if (this.horizontal_vel.getValue() != 100) {
-                packet.motionX = packet.motionX / 100 * this.horizontal_vel.getValue();
-                packet.motionZ = packet.motionZ / 100 * this.horizontal_vel.getValue();
+                ((AccessorSPacketExplosion) packet).setMotionX(packet.getMotionX() / 100 * this.horizontal_vel.getValue());
+                ((AccessorSPacketExplosion) packet).setMotionZ(packet.getMotionZ() / 100 * this.horizontal_vel.getValue());
             }
 
             if (this.vertical_vel.getValue() != 100) {
-                packet.motionY = packet.motionY / 100 * this.vertical_vel.getValue();
+                ((AccessorSPacketExplosion) packet).setMotionY(packet.getMotionY() / 100 * this.vertical_vel.getValue());
             }
         }
     }

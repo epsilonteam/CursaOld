@@ -4,6 +4,7 @@ import club.eridani.cursa.Cursa;
 import club.eridani.cursa.common.annotations.Module;
 import club.eridani.cursa.common.annotations.Parallel;
 import club.eridani.cursa.event.events.network.PacketEvent;
+import club.eridani.cursa.mixin.mixins.accessor.AccessorCPacketChatMessage;
 import club.eridani.cursa.module.Category;
 import club.eridani.cursa.module.ModuleBase;
 import club.eridani.cursa.setting.Setting;
@@ -22,7 +23,7 @@ public class CustomChat extends ModuleBase {
             if (s.startsWith("/") && !commands.getValue()) return;
             s += Cursa.CHAT_SUFFIX;
             if (s.length() >= 256) s = s.substring(0, 256);
-            ((CPacketChatMessage) event.getPacket()).message = s;
+            ((AccessorCPacketChatMessage) event.getPacket()).setMessage(s);
         }
     }
 
