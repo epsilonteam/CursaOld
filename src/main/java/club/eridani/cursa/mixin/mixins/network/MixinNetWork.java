@@ -1,6 +1,7 @@
 package club.eridani.cursa.mixin.mixins.network;
 
 import club.eridani.cursa.Cursa;
+import club.eridani.cursa.event.decentraliized.DecentralizedPacketEvent;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.client.Minecraft;
@@ -17,6 +18,7 @@ public class MixinNetWork {
     private void packetReceived(ChannelHandlerContext context, Packet<?> packet, CallbackInfo callbackInfo) {
         if (Minecraft.getMinecraft().player != null && Minecraft.getMinecraft().world != null) {
             final PacketEvent.Receive event = new PacketEvent.Receive(packet);
+            DecentralizedPacketEvent.Receive.instance.post(event);
             Cursa.EVENT_BUS.post(event);
             if (event.isCancelled() && callbackInfo.isCancellable()) {
                 callbackInfo.cancel();
@@ -28,6 +30,7 @@ public class MixinNetWork {
     private void sendPacket(Packet<?> packetIn, CallbackInfo callbackInfo) {
         if (Minecraft.getMinecraft().player != null && Minecraft.getMinecraft().world != null) {
             final PacketEvent.Send event = new PacketEvent.Send(packetIn);
+            DecentralizedPacketEvent.Send.instance.post(event);
             Cursa.EVENT_BUS.post(event);
             if (event.isCancelled() && callbackInfo.isCancellable()) {
                 callbackInfo.cancel();

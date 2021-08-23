@@ -1,10 +1,11 @@
 package club.eridani.cursa.event.events.render;
 
+import club.eridani.cursa.concurrent.decentralization.EventData;
 import club.eridani.cursa.event.CursaEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 
-public final class RenderOverlayEvent extends CursaEvent {
+public final class RenderOverlayEvent extends CursaEvent implements EventData {
 
     private final float partialTicks;
     private final ScaledResolution scaledResolution;

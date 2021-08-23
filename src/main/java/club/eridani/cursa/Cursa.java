@@ -7,6 +7,7 @@ import club.eridani.cursa.concurrent.event.Priority;
 import club.eridani.cursa.event.events.client.InitializationEvent;
 import club.eridani.cursa.module.modules.client.ClickGUI;
 import club.eridani.cursa.tasks.Tasks;
+import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.Display;
@@ -20,7 +21,7 @@ import static club.eridani.cursa.concurrent.TaskManager.*;
 public class Cursa {
 
     public static final String MOD_NAME = "Cursa";
-    public static final String MOD_VERSION = "b4";
+    public static final String MOD_VERSION = "b5";
 
     public static final String AUTHOR = "B_312";
     public static final String GITHUB = "https://github.com/SexyTeam/Cursa";
@@ -32,7 +33,6 @@ public class Cursa {
 
     public Cursa() {
         instance = this;
-        EVENT_BUS.register(this);
     }
 
     @Listener(priority = Priority.HIGHEST)

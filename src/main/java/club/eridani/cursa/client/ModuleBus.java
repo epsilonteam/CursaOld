@@ -1,11 +1,15 @@
 package club.eridani.cursa.client;
 
 import club.eridani.cursa.Cursa;
+import club.eridani.cursa.concurrent.decentralization.ListenableImpl;
 import club.eridani.cursa.concurrent.event.Listener;
 import club.eridani.cursa.concurrent.event.Priority;
+import club.eridani.cursa.event.decentraliized.DecentralizedClientTickEvent;
+import club.eridani.cursa.event.decentraliized.DecentralizedPacketEvent;
+import club.eridani.cursa.event.decentraliized.DecentralizedRenderTickEvent;
+import club.eridani.cursa.event.decentraliized.DecentralizedRenderWorldEvent;
 import club.eridani.cursa.event.events.client.InputUpdateEvent;
 import club.eridani.cursa.event.events.client.SettingUpdateEvent;
-import club.eridani.cursa.event.events.client.TickEvent;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.event.events.render.RenderOverlayEvent;
 import club.eridani.cursa.event.events.render.RenderWorldEvent;
@@ -17,10 +21,16 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static club.eridani.cursa.concurrent.TaskManager.runBlocking;
 
-public class ModuleBus {
+public class ModuleBus extends ListenableImpl {
 
     public ModuleBus() {
         Cursa.EVENT_BUS.register(this);
+        listener(DecentralizedClientTickEvent.class, it -> onTick());
+        listener(DecentralizedRenderTickEvent.class, this::onRenderTick);
+        listener(DecentralizedRenderWorldEvent.class, this::onRenderWorld);
+        listener(DecentralizedPacketEvent.Send.class, this::onPacketSend);
+        listener(DecentralizedPacketEvent.Receive.class, this::onPacketReceive);
+        subscribe();
     }
 
     private final List<ModuleBase> modules = new CopyOnWriteArrayList<>();
@@ -48,8 +58,7 @@ public class ModuleBus {
         modules.forEach(mod -> mod.onInputUpdate(event));
     }
 
-    @Listener(priority = Priority.HIGHEST)
-    public void onTick(TickEvent event) {
+    public void onTick() {
         runBlocking(it -> modules.forEach(module -> {
             if (module.parallelRunnable) {
                 it.launch(() -> {
@@ -71,7 +80,6 @@ public class ModuleBus {
         }));
     }
 
-    @Listener(priority = Priority.HIGHEST)
     public void onRenderTick(RenderOverlayEvent event) {
         runBlocking(it -> modules.forEach(module -> {
             try {
@@ -100,12 +108,10 @@ public class ModuleBus {
         }));
     }
 
-    @Listener(priority = Priority.HIGHEST)
     public void onRenderWorld(RenderWorldEvent event) {
         WorldRenderPatcher.INSTANCE.patch(event);
     }
 
-    @Listener(priority = Priority.HIGHEST)
     public void onPacketSend(PacketEvent.Send event) {
         modules.forEach(module -> {
             try {
@@ -117,7 +123,6 @@ public class ModuleBus {
         });
     }
 
-    @Listener(priority = Priority.HIGHEST)
     public void onPacketReceive(PacketEvent.Receive event) {
         modules.forEach(module -> {
             try {

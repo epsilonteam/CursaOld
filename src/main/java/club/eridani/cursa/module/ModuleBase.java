@@ -3,6 +3,7 @@ package club.eridani.cursa.module;
 import club.eridani.cursa.Cursa;
 import club.eridani.cursa.common.annotations.Module;
 import club.eridani.cursa.common.annotations.Parallel;
+import club.eridani.cursa.concurrent.decentralization.ListenableImpl;
 import club.eridani.cursa.event.events.client.InputUpdateEvent;
 import club.eridani.cursa.event.events.network.PacketEvent;
 import club.eridani.cursa.event.events.render.RenderEvent;
@@ -11,12 +12,13 @@ import club.eridani.cursa.notification.NotificationManager;
 import club.eridani.cursa.setting.Setting;
 import club.eridani.cursa.setting.settings.*;
 import net.minecraft.client.Minecraft;
+import net.minecraftforge.common.MinecraftForge;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ModuleBase {
+public class ModuleBase extends ListenableImpl {
 
     public final String name;
     public final Category category;
@@ -71,6 +73,7 @@ public class ModuleBase {
     public void enable() {
         enabled = true;
         Cursa.MODULE_BUS.register(this);
+        subscribe();
         NotificationManager.moduleToggle(this, true);
         onEnable();
     }
@@ -78,6 +81,7 @@ public class ModuleBase {
     public void disable() {
         enabled = false;
         Cursa.MODULE_BUS.unregister(this);
+        unsubscribe();
         NotificationManager.moduleToggle(this, false);
         onDisable();
     }

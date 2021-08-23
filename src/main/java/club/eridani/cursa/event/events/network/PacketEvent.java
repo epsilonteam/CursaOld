@@ -1,9 +1,10 @@
 package club.eridani.cursa.event.events.network;
 
+import club.eridani.cursa.concurrent.decentralization.EventData;
 import club.eridani.cursa.event.CursaEvent;
 import net.minecraft.network.Packet;
 
-public class PacketEvent extends CursaEvent {
+public class PacketEvent extends CursaEvent implements EventData {
 
     public final Packet<?> packet;
 

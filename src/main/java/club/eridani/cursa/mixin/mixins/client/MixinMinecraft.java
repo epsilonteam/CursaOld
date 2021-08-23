@@ -2,7 +2,7 @@ package club.eridani.cursa.mixin.mixins.client;
 
 import club.eridani.cursa.Cursa;
 import club.eridani.cursa.client.ConfigManager;
-import club.eridani.cursa.concurrent.TaskManager;
+import club.eridani.cursa.event.decentraliized.DecentralizedClientTickEvent;
 import club.eridani.cursa.event.events.client.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -48,12 +48,15 @@ public class MixinMinecraft {
 
     @Inject(method = "runTick", at = @At("RETURN"))
     public void onTick(CallbackInfo ci) {
-        if (Minecraft.getMinecraft().player != null) Cursa.EVENT_BUS.post(new TickEvent());
+        if (Minecraft.getMinecraft().player != null) {
+            DecentralizedClientTickEvent.instance.post(null);
+            Cursa.EVENT_BUS.post(new TickEvent());
+        }
     }
 
     @Inject(method = "init", at = @At("HEAD"))
     public void onInitMinecraft(CallbackInfo ci) {
-        Cursa.getInstance();
+        Cursa.EVENT_BUS.register(Cursa.getInstance());
     }
 
     @Inject(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;checkGLError(Ljava/lang/String;)V", ordinal = 0, shift = At.Shift.BEFORE))

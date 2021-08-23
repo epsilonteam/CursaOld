@@ -222,7 +222,7 @@ public strictfp class CursaAura extends ModuleBase {
         ((AccessorCPacketUseEntity) packet).setId(entityId);
     }
 
-    @Listener(priority = Priority.HIGH, parallel = true)
+    @Listener(priority = Priority.PARALLEL)
     public void renderModelRotation(RenderModelEvent event) {
         if (!rotate.getValue()) return;
         if (rotating) {

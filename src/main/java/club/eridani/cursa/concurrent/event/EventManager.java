@@ -34,7 +34,7 @@ public class EventManager {
                                 e.printStackTrace();
                             }
                         };
-                        SubscribedUnit unit = new SubscribedUnit(owner, method.getParameterTypes()[0], task, annotation.priority(), annotation.parallel());
+                        SubscribedUnit unit = new SubscribedUnit(owner, method.getParameterTypes()[0], task, annotation.priority(), annotation.priority() == Priority.PARALLEL);
                         registeredUnit.add(unit);
                     }
                 }
