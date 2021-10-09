@@ -1,7 +1,7 @@
 {
   "required": false,
   "compatibilityLevel": "JAVA_8",
-  "package": "club.eridani.cursa.mixin.mixins",
+  "package": "net.spartanb312.cursa.mixin.mixins",
   "refmap": "mixins.cursa.refmap.json",
   "mixins": [
     "accessor.AccessorCPacketChatMessage",

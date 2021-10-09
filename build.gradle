@@ -40,7 +40,7 @@ minecraft {
         client {
             workingDirectory project.file('run')
 
-            property 'fml.coreMods.load', 'club.eridani.cursa.mixin.MixinLoader'
+            property 'fml.coreMods.load', 'net.spartanb312.cursa.mixin.MixinLoader'
             property 'mixin.env.disableRefMap', 'true' // Disable refmap so we don't get trolled by Baritone
 
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
@@ -64,20 +64,11 @@ dependencies {
         exclude module: 'commons-io'
     }
 
-    addLib(group: 'org.reflections', name: 'reflections', version: '0.9.12') {
-        exclude module: 'gson'
-        exclude module: 'guava'
-    }
-
     annotationProcessor('org.spongepowered:mixin:0.8.2:processor') {
         exclude module: 'gson'
     }
 
-    addLib('club.minnced:java-discord-rpc:v2.0.2') {
-        exclude module: 'jna'
-    }
-
-    compileOnly('org.jetbrains:annotations:20.1.0')
+    compileOnly('org.jetbrains:annotations:22.0.0')
 
     implementation configurations.addLib
 }
@@ -117,7 +108,7 @@ jar {
                 'tweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
                 'TweakOrder': 0,
                 'FMLCorePluginContainsFMLMod': 'true',
-                'FMLCorePlugin': 'club.eridani.cursa.mixin.MixinLoader',
+                'FMLCorePlugin': 'net.spartanb312.cursa.mixin.MixinLoader',
                 'ForceLoadAsMod': 'true',
                 'FMLAT': 'cursa_at.cfg'
         )
@@ -128,4 +119,8 @@ jar {
             it.isDirectory() ? it : zipTree(it)
         }
     }
+
+    exclude("LICENSE.txt")
+    exclude("META-INF/maven/**")
+    exclude("META-INF/MUMFREY.RSA")
 }
